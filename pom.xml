@@ -240,9 +240,9 @@
                 <version>${coveralls-maven-plugin.version}</version>
                 <configuration>
                     <repoToken>PmmgdTzVuYQAsiOHNZ67bNDuqwDRSKvlm</repoToken>
-                    <formats>
+                    <!--<formats>
                         <format>xml</format>
-                    </formats>
+                    </formats>-->
                 </configuration>
             </plugin>
 
