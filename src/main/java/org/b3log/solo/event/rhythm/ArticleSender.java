@@ -80,6 +80,9 @@ public final class ArticleSender extends AbstractEventListener<JSONObject> {
 
     @Override
     public void action(final Event<JSONObject> event) throws EventException {
+        if (event != null) {
+            return;//不往hacpai同步数据，//todo 同步处理
+        }
         final JSONObject data = event.getData();
 
         LOGGER.log(Level.DEBUG, "Processing an event[type={0}, data={1}] in listener[className={2}]",

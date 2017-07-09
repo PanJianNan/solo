@@ -108,6 +108,9 @@ public class ArticleReceiver {
     @RequestProcessing(value = "/apis/symphony/article", method = HTTPRequestMethod.POST)
     public void addArticle(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context)
             throws Exception {
+        if (context != null) {
+            return;//不往hacpai同步数据，//todo 同步处理
+        }
         final JSONRenderer renderer = new JSONRenderer();
 
         context.setRenderer(renderer);
@@ -188,6 +191,10 @@ public class ArticleReceiver {
     @RequestProcessing(value = "/apis/symphony/article", method = HTTPRequestMethod.PUT)
     public void updateArticle(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context)
             throws Exception {
+        if (context != null) {
+            return;//不往hacpai同步数据，//todo 同步处理
+        }
+
         final JSONRenderer renderer = new JSONRenderer();
 
         context.setRenderer(renderer);

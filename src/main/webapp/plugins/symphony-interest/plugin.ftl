@@ -1,6 +1,6 @@
 <link type="text/css" rel="stylesheet" href="${staticServePath}/plugins/symphony-interest/style.css"/>
 <div id="symphonyInterestPanel">
-    <div class="module-panel">
+    <#--<div class="module-panel">
         <div class="module-header">
             <h2>${interestLabel}</h2>
         </div>
@@ -8,8 +8,9 @@
             <div id="symphonyInterest">
             </div>
         </div>
-    </div>
+    </div>-->
 </div>
+<#--
 <script type="text/javascript">
     plugins.symphonyInterest = {
         init: function () {
@@ -81,3 +82,4 @@
     // 移除现有内容
     $("#symphonyInterestPanel").remove();
 </script>
+-->

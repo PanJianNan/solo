@@ -60,7 +60,7 @@ import java.util.Date;
  * @version 1.1.1.12, Apr 25, 2017
  * @since 0.5.5
  */
-@RequestProcessor
+//@RequestProcessor
 public class CommentReceiver {
 
     /**
@@ -151,6 +151,9 @@ public class CommentReceiver {
     @RequestProcessing(value = "/apis/symphony/comment", method = HTTPRequestMethod.PUT)
     public void addComment(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context)
             throws Exception {
+        if (context != null) {
+            return;//不往hacpai同步数据，//todo 同步处理
+        }
         final JSONRenderer renderer = new JSONRenderer();
 
         context.setRenderer(renderer);

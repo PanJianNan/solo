@@ -5,6 +5,6 @@
 <img class="img-404" src="${staticServePath}/images/404.gif" title="404" alt="404 Not Found!"/>
 <div class="a-404">
     欢迎访问
-    <a href="https://hacpai.com">黑客与画家</a>
+    <a href="http://weibo.com/TernencePan/profile?rightmod=1&wvr=6&mod=personinfo&is_all=1">请找大叔</a>
 </div>
 </@commonPage>

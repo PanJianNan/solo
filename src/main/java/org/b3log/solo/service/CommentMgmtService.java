@@ -195,11 +195,11 @@ public class CommentMgmtService {
             return;
         }
 
-        if (Latkes.getServePath().contains("localhost")) {
+        /*if (Latkes.getServePath().contains("localhost")) {
             LOGGER.log(Level.INFO, "Solo runs on local server, so should not send mail");
 
             return;
-        }
+        }*/
 
         if (null != originalComment && comment.has(Comment.COMMENT_ORIGINAL_COMMENT_ID)) {
             final String originalEmail = originalComment.getString(Comment.COMMENT_EMAIL);
@@ -223,8 +223,8 @@ public class CommentMgmtService {
         final String commentSharpURL = comment.getString(Comment.COMMENT_SHARP_URL);
         final MailService.Message message = new MailService.Message();
 
-        message.setFrom(adminEmail);
-        message.addRecipient(adminEmail);
+        message.setFrom("474391842@qq.com");
+        message.addRecipient("375424139@qq.com");
         String mailSubject;
         String articleOrPageURL;
         String mailBody;

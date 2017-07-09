@@ -1,6 +1,6 @@
 <link type="text/css" rel="stylesheet" href="${staticServePath}/plugins/b3log-broadcast/style.css"/>
 <div id="b3logBroadcastPanel">
-    <div id="b3logBroadcast">
+    <#--<div id="b3logBroadcast">
         <div class="module-panel">
             <div class="module-header">
                 <h2 class="left">
@@ -27,8 +27,9 @@
         <span class="none msg">${noEmptyLabel}</span>
         <textarea id="b3logBroadcastContent"></textarea>
         <button class="marginTop12">${submitLabel}</button><span class="none msg">${submitErrorLabel}</span>
-    </div>
+    </div>-->
 </div>
+<#--
 <script type="text/javascript">
     plugins.b3logBroadcast = {
         init: function() {
@@ -185,4 +186,4 @@
 
     // 移除现有内容
     $("#b3logBroadcastPanel").remove();
-</script>
+</script>-->

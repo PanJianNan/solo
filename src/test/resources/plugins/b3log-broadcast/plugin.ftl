@@ -170,7 +170,7 @@
             setInterval(function() {
                 broadcastChange();
             }, 10000);
-            
+
             broadcastChange();
         }
     };
