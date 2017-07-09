@@ -195,11 +195,11 @@ public class CommentMgmtService {
             return;
         }
 
-        /*if (Latkes.getServePath().contains("localhost")) {
+        if (Latkes.getServePath().contains("localhost")) {
             LOGGER.log(Level.INFO, "Solo runs on local server, so should not send mail");
 
             return;
-        }*/
+        }
 
         if (null != originalComment && comment.has(Comment.COMMENT_ORIGINAL_COMMENT_ID)) {
             final String originalEmail = originalComment.getString(Comment.COMMENT_EMAIL);
