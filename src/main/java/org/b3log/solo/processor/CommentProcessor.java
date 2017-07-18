@@ -17,6 +17,7 @@ package org.b3log.solo.processor;
 
 
 import freemarker.template.Template;
+import org.apache.commons.lang.StringUtils;
 import org.b3log.latke.Keys;
 import org.b3log.latke.ioc.inject.Inject;
 import org.b3log.latke.logging.Level;
@@ -36,6 +37,7 @@ import org.b3log.solo.service.PreferenceQueryService;
 import org.b3log.solo.service.UserMgmtService;
 import org.b3log.solo.service.UserQueryService;
 import org.b3log.solo.util.Emotions;
+import org.b3log.solo.util.RandomNameUtil;
 import org.b3log.solo.util.Skins;
 import org.json.JSONObject;
 
@@ -299,6 +301,7 @@ public class CommentProcessor {
 
                 addResult.put("cmtTpl", cmtTpl);
             } catch (final Exception e) {
+                e.printStackTrace();
                 // 1.9.0 向后兼容
             }
 
@@ -325,12 +328,20 @@ public class CommentProcessor {
         userMgmtService.tryLogInWithCookie(httpServletRequest, httpServletResponse);
 
         final JSONObject currentUser = userQueryService.getCurrentUser(httpServletRequest);
-        if (null == currentUser) {
+        if (currentUser != null) {
+            requestJSONObject.put(Comment.COMMENT_NAME, currentUser.optString(User.USER_NAME));
+            requestJSONObject.put(Comment.COMMENT_EMAIL, currentUser.optString(User.USER_EMAIL));
+            requestJSONObject.put(Comment.COMMENT_URL, currentUser.optString(User.USER_URL));
             return;
         }
 
-        requestJSONObject.put(Comment.COMMENT_NAME, currentUser.optString(User.USER_NAME));
-        requestJSONObject.put(Comment.COMMENT_EMAIL, currentUser.optString(User.USER_EMAIL));
-        requestJSONObject.put(Comment.COMMENT_URL, currentUser.optString(User.USER_URL));
+
+        if (StringUtils.isBlank(currentUser.optString(User.USER_NAME))) {//非登陆用户未填写名称则赋予随机昵称
+            requestJSONObject.put(Comment.COMMENT_NAME, "无名氏-" + RandomNameUtil.generate());
+        } else {
+            requestJSONObject.put(Comment.COMMENT_NAME, currentUser.optString(User.USER_NAME));
+        }
+        //todo 剔除非登陆用户邮箱依赖
+        requestJSONObject.put(Comment.COMMENT_EMAIL, "185503728@qq.com");
     }
 }
