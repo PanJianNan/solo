@@ -335,11 +335,9 @@ public class CommentProcessor {
             return;
         }
 
-
-        if (StringUtils.isBlank(currentUser.optString(User.USER_NAME))) {//非登陆用户未填写名称则赋予随机昵称
+        //非登陆用户未填写名称则赋予随机昵称
+        if (StringUtils.isBlank(requestJSONObject.optString(Comment.COMMENT_NAME))) {
             requestJSONObject.put(Comment.COMMENT_NAME, "无名氏-" + RandomNameUtil.generate());
-        } else {
-            requestJSONObject.put(Comment.COMMENT_NAME, currentUser.optString(User.USER_NAME));
         }
         //todo 剔除非登陆用户邮箱依赖
         requestJSONObject.put(Comment.COMMENT_EMAIL, "185503728@qq.com");
