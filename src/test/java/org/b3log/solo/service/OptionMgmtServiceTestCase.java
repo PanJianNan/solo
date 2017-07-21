@@ -34,7 +34,7 @@ public class OptionMgmtServiceTestCase extends AbstractTestCase {
 
     /**
      * Add.
-     * 
+     *
      * @throws Exception exception
      */
     @Test
@@ -47,13 +47,16 @@ public class OptionMgmtServiceTestCase extends AbstractTestCase {
         option.put(Option.OPTION_VALUE, 0L);
 
         final String id = optionMgmtService.addOrUpdateOption(option);
-        System.out.println(id);
+        //System.out.println(id);
         Assert.assertNotNull(id);
+
+        final JSONObject opt = getOptionQueryService().getOptionById(Option.ID_C_BROADCAST_CHANCE_EXPIRATION_TIME);
+        Assert.assertEquals(opt.getInt(Option.OPTION_VALUE), 0L);
     }
 
     /**
      * Update.
-     * 
+     *
      * @throws Exception exception
      */
     @Test
@@ -66,24 +69,23 @@ public class OptionMgmtServiceTestCase extends AbstractTestCase {
         option.put(Option.OPTION_VALUE, 0L);
 
         final String id = optionMgmtService.addOrUpdateOption(option); // Add
-        System.out.println(id);
+        //System.out.println(id);
         Assert.assertNotNull(id);
 
         option = new JSONObject();
         option.put(Keys.OBJECT_ID, Option.ID_C_BROADCAST_CHANCE_EXPIRATION_TIME);
         option.put(Option.OPTION_CATEGORY, Option.CATEGORY_C_BROADCAST);
         option.put(Option.OPTION_VALUE, 1L);
-        
+
         optionMgmtService.addOrUpdateOption(option); // Update
 
         final JSONObject opt = getOptionQueryService().getOptionById(Option.ID_C_BROADCAST_CHANCE_EXPIRATION_TIME);
         Assert.assertEquals(opt.getInt(Option.OPTION_VALUE), 1L);
-
     }
 
     /**
      * Remove.
-     * 
+     *
      * @throws Exception exception
      */
     @Test
