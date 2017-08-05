@@ -101,4 +101,6 @@
     <include path="/CHANGE_LOGS.html"/>
     <include path="/LICENSE.txt"/>
 
+    <include path="/baidu_verify_AcuwEmUx6V.html" />
+
 </static-files>
