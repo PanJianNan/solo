@@ -16,6 +16,8 @@
 package org.b3log.solo.model;
 
 
+import org.b3log.solo.util.SensitiveWordsUtil;
+
 /**
  * This class defines ext of user model relevant keys.
  *
@@ -77,7 +79,9 @@ public final class UserExt {
             return true;
         }
 
-        char c;
+        return false;
+
+        /*char c;
         for (int i = 0; i < length; i++) {
             c = name.charAt(i);
 
@@ -88,6 +92,10 @@ public final class UserExt {
             return true;
         }
 
-        return name.contains("admin") || name.contains("Admin");
+        return name.contains("admin") || name.contains("Admin");*/
+    }
+
+    public static boolean sensitiveUserName(String userName) {
+        return SensitiveWordsUtil.isContain(userName);
     }
 }

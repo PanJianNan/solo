@@ -36,6 +36,7 @@ import org.b3log.latke.util.Strings;
 import org.b3log.solo.model.UserExt;
 import org.b3log.solo.repository.UserRepository;
 import org.b3log.solo.util.Thumbnails;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.servlet.http.Cookie;
@@ -167,7 +168,12 @@ public class UserMgmtService {
             // Update
             final String userName = requestJSONObject.optString(User.USER_NAME);
             if (UserExt.invalidUserName(userName)) {
-                throw new ServiceException(langPropsService.get("userNameInvalidLabel"));
+                throw new ServiceException("用户名过短或过长！");//todo 中英文
+                //throw new ServiceException(langPropsService.get("userNameInvalidLabel"));
+            }
+            //非管理员需要进行用户名敏感词校验
+            if (!"adminRole".equals(oldUser.getString(User.USER_ROLE)) && UserExt.sensitiveUserName(userName)) {
+                throw new ServiceException("用户名包含敏感词！");//todo 中英文
             }
             oldUser.put(User.USER_NAME, userName);
 
@@ -204,6 +210,9 @@ public class UserMgmtService {
                 transaction.rollback();
             }
 
+            LOGGER.log(Level.ERROR, "Updates a user failed", e);
+            throw new ServiceException(e);
+        } catch (JSONException e) {
             LOGGER.log(Level.ERROR, "Updates a user failed", e);
             throw new ServiceException(e);
         }
