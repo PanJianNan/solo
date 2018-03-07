@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.b3log.latke.repository.Transaction;
 import org.b3log.latke.service.LangPropsService;
 import org.b3log.latke.service.ServiceException;
 import org.b3log.latke.service.annotation.Service;
+import org.b3log.latke.util.Crypts;
 import org.b3log.latke.util.MD5;
 import org.b3log.latke.util.Sessions;
 import org.b3log.latke.util.Strings;
@@ -48,7 +49,8 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
  * @author <a href="mailto:385321165@qq.com">DASHU</a>
- * @version 1.1.0.8, May 25, 2017
+ * @author <a href="https://github.com/nanolikeyou">nanolikeyou</a>
+ * @version 1.1.0.11, Aug 14, 2017
  * @since 0.4.0
  */
 @Service
@@ -84,7 +86,6 @@ public class UserMgmtService {
      */
     public void tryLogInWithCookie(final HttpServletRequest request, final HttpServletResponse response) {
         final Cookie[] cookies = request.getCookies();
-
         if (null == cookies || 0 == cookies.length) {
             return;
         }
@@ -92,38 +93,45 @@ public class UserMgmtService {
         try {
             for (int i = 0; i < cookies.length; i++) {
                 final Cookie cookie = cookies[i];
-                if (!"b3log-latke".equals(cookie.getName())) {
+                if (!Sessions.COOKIE_NAME.equals(cookie.getName())) {
                     continue;
                 }
 
-                final JSONObject cookieJSONObject = new JSONObject(cookie.getValue());
+                final String value = Crypts.decryptByAES(cookie.getValue(), Sessions.COOKIE_SECRET);
+                final JSONObject cookieJSONObject = new JSONObject(value);
 
-                final String userEmail = cookieJSONObject.optString(User.USER_EMAIL);
-                if (Strings.isEmptyOrNull(userEmail)) {
+                final String userId = cookieJSONObject.optString(Keys.OBJECT_ID);
+                if (Strings.isEmptyOrNull(userId)) {
                     break;
                 }
 
                 final LatkeBeanManager beanManager = Lifecycle.getBeanManager();
                 final UserQueryService userQueryService = beanManager.getReference(UserQueryService.class);
 
-                final JSONObject user = userQueryService.getUserByEmail(userEmail.toLowerCase().trim());
+                final JSONObject userResult = userQueryService.getUser(userId);
+                if (null == userResult) {
+                    break;
+                }
 
+                final JSONObject user = userResult.getJSONObject(User.USER);
                 if (null == user) {
                     break;
                 }
 
                 final String userPassword = user.optString(User.USER_PASSWORD);
-                final String hashPassword = cookieJSONObject.optString(User.USER_PASSWORD);
+                final String token = cookieJSONObject.optString(Keys.TOKEN);
+                final String hashPassword = StringUtils.substringBeforeLast(token, ":");
 
                 if (userPassword.equals(hashPassword)) {
                     Sessions.login(request, response, user);
-                    LOGGER.log(Level.DEBUG, "Logged in with cookie[email={0}]", userEmail);
+
+                    LOGGER.log(Level.DEBUG, "Logged in with cookie [email={0}]", user.optString(User.USER_EMAIL));
                 }
             }
         } catch (final Exception e) {
-            LOGGER.log(Level.TRACE, "Parses cookie failed, clears the cookie [name=b3log-latke]");
+            LOGGER.log(Level.TRACE, "Parses cookie failed, clears the cookie [name=" + Sessions.COOKIE_NAME + "]");
 
-            final Cookie cookie = new Cookie("b3log-latke", null);
+            final Cookie cookie = new Cookie(Sessions.COOKIE_NAME, null);
             cookie.setMaxAge(0);
             cookie.setPath("/");
 
@@ -276,6 +284,10 @@ public class UserMgmtService {
         try {
             final JSONObject user = new JSONObject();
             final String userEmail = requestJSONObject.optString(User.USER_EMAIL).trim().toLowerCase();
+            if (!Strings.isEmail(userEmail)) {
+                throw new ServiceException(langPropsService.get("mailInvalidLabel"));
+            }
+
             final JSONObject duplicatedUser = userRepository.getByEmail(userEmail);
 
             if (null != duplicatedUser) {
@@ -289,6 +301,9 @@ public class UserMgmtService {
             user.put(User.USER_EMAIL, userEmail);
 
             final String userName = requestJSONObject.optString(User.USER_NAME);
+            if (UserExt.invalidUserName(userName)) {
+                throw new ServiceException(langPropsService.get("userNameInvalidLabel"));
+            }
             user.put(User.USER_NAME, userName);
 
             final String userPassword = requestJSONObject.optString(User.USER_PASSWORD);

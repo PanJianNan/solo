@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import org.json.JSONObject;
  * Article cache.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.0.0.0, Jul 6, 2017
+ * @version 1.1.0.0, Aug 30, 2017
  * @since 2.3.0
  */
 @Named
@@ -36,13 +36,14 @@ import org.json.JSONObject;
 public class ArticleCache {
 
     /**
-     * Article cache.
+     * Article id cache.
      */
-    private static final Cache ARTICLE_CACHE = CacheFactory.getCache(Article.ARTICLES);
+    private Cache idCache = CacheFactory.getCache(Article.ARTICLES);
 
-    static {
-        ARTICLE_CACHE.setMaxCount(128);
-    }
+    /**
+     * Article permalink cache.
+     */
+    private Cache permalinkCache = CacheFactory.getCache(Article.ARTICLE_PERMALINK);
 
     /**
      * Gets an article by the specified article id.
@@ -51,7 +52,22 @@ public class ArticleCache {
      * @return article, returns {@code null} if not found
      */
     public JSONObject getArticle(final String id) {
-        final JSONObject article = ARTICLE_CACHE.get(id);
+        final JSONObject article = idCache.get(id);
+        if (null == article) {
+            return null;
+        }
+
+        return JSONs.clone(article);
+    }
+
+    /**
+     * Gets an article by the specified article permalink.
+     *
+     * @param permalink the specified article permalink
+     * @return article, returns {@code null} if not found
+     */
+    public JSONObject getArticleByPermalink(final String permalink) {
+        final JSONObject article = permalinkCache.get(permalink);
         if (null == article) {
             return null;
         }
@@ -65,9 +81,8 @@ public class ArticleCache {
      * @param article the specified article
      */
     public void putArticle(final JSONObject article) {
-        final String articleId = article.optString(Keys.OBJECT_ID);
-
-        ARTICLE_CACHE.put(articleId, JSONs.clone(article));
+        idCache.put(article.optString(Keys.OBJECT_ID), JSONs.clone(article));
+        permalinkCache.put(article.optString(Article.ARTICLE_PERMALINK), JSONs.clone(article));
     }
 
     /**
@@ -76,6 +91,6 @@ public class ArticleCache {
      * @param id the specified article id
      */
     public void removeArticle(final String id) {
-        ARTICLE_CACHE.remove(id);
+        idCache.remove(id);
     }
 }

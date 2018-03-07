@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.b3log.latke.servlet.HTTPRequestMethod;
 import org.b3log.latke.servlet.annotation.RequestProcessing;
 import org.b3log.latke.servlet.annotation.RequestProcessor;
 import org.b3log.latke.servlet.renderer.JSONRenderer;
-import org.b3log.latke.util.Requests;
 import org.b3log.solo.model.Article;
 import org.b3log.solo.model.Common;
 import org.b3log.solo.model.Option;
@@ -37,14 +36,11 @@ import org.b3log.solo.service.UserQueryService;
 import org.b3log.solo.util.QueryResults;
 import org.json.JSONObject;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 /**
  * Article receiver (from B3log Symphony).
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.0.3.8, Jan 25, 2017
+ * @version 1.0.4.1, Mar 3, 2018
  * @since 0.5.5
  */
 @RequestProcessor
@@ -92,33 +88,29 @@ public class ArticleReceiver {
      * </pre>
      * </p>
      *
-     * @param request  the specified http servlet request, for example,
-     *                 "article": {
-     *                 "oId": "",
-     *                 "articleTitle": "",
-     *                 "articleContent": "",
-     *                 "articleTags": "tag1,tag2,tag3",
-     *                 "userB3Key": "",
-     *                 "articleEditorType": ""
-     *                 }
-     * @param response the specified http servlet response
-     * @param context  the specified http request context
+     * @param context           the specified http request context
+     * @param requestJSONObject the specified http servlet request, for example,
+     *                          "article": {
+     *                          "oId": "",
+     *                          "articleTitle": "",
+     *                          "articleContent": "",
+     *                          "articleTags": "tag1,tag2,tag3",
+     *                          "userB3Key": "",
+     *                          "articleEditorType": ""
+     *                          }
      * @throws Exception exception
      */
     @RequestProcessing(value = "/apis/symphony/article", method = HTTPRequestMethod.POST)
-    public void addArticle(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context)
+    public void addArticle(final HTTPRequestContext context, final JSONObject requestJSONObject)
             throws Exception {
         if (context != null) {
             return;//不往hacpai同步数据，//todo 同步处理
         }
         final JSONRenderer renderer = new JSONRenderer();
-
         context.setRenderer(renderer);
-
         final JSONObject ret = new JSONObject();
 
         try {
-            final JSONObject requestJSONObject = Requests.parseRequestJSONObject(request, response);
             final JSONObject article = requestJSONObject.optJSONObject(Article.ARTICLE);
             final String userB3Key = article.optString("userB3Key");
             final JSONObject preference = preferenceQueryService.getPreference();
@@ -139,11 +131,8 @@ public class ArticleReceiver {
             article.put(Common.POST_TO_COMMUNITY, false); // Do not send to rhythm
             article.put(Article.ARTICLE_COMMENTABLE, true);
             article.put(Article.ARTICLE_VIEW_PWD, "");
-            String content = article.getString(Article.ARTICLE_CONTENT);
+            final String content = article.getString(Article.ARTICLE_CONTENT);
             final String articleId = article.getString(Keys.OBJECT_ID);
-
-//            content += "\n\n<p style='font-size: 12px;'><i>该文章同步自 <a href='https://hacpai.com/article/" + articleId
-//                + "' target='_blank'>黑客派</a></i></p>";
             article.put(Article.ARTICLE_CONTENT, content);
 
             articleMgmtService.addArticle(requestJSONObject);
@@ -175,36 +164,31 @@ public class ArticleReceiver {
      * </pre>
      * </p>
      *
-     * @param request  the specified http servlet request, for example,
-     *                 "article": {
-     *                 "oId": "", // Symphony Article#clientArticleId
-     *                 "articleTitle": "",
-     *                 "articleContent": "",
-     *                 "articleTags": "tag1,tag2,tag3",
-     *                 "userB3Key": "",
-     *                 "articleEditorType": ""
-     *                 }
-     * @param response the specified http servlet response
-     * @param context  the specified http request context
+     * @param context           the specified http request context
+     * @param requestJSONObject the specified http servlet request, for example,
+     *                          "article": {
+     *                          "oId": "", // Symphony Article#clientArticleId
+     *                          "articleTitle": "",
+     *                          "articleContent": "",
+     *                          "articleTags": "tag1,tag2,tag3",
+     *                          "userB3Key": "",
+     *                          "articleEditorType": ""
+     *                          }
      * @throws Exception exception
      */
     @RequestProcessing(value = "/apis/symphony/article", method = HTTPRequestMethod.PUT)
-    public void updateArticle(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context)
+    public void updateArticle(final HTTPRequestContext context, final JSONObject requestJSONObject)
             throws Exception {
         if (context != null) {
             return;//不往hacpai同步数据，//todo 同步处理
         }
 
         final JSONRenderer renderer = new JSONRenderer();
-
         context.setRenderer(renderer);
-
         final JSONObject ret = new JSONObject();
-
         renderer.setJSONObject(ret);
 
         try {
-            final JSONObject requestJSONObject = Requests.parseRequestJSONObject(request, response);
             final JSONObject article = requestJSONObject.optJSONObject(Article.ARTICLE);
             final String userB3Key = article.optString("userB3Key");
             final JSONObject preference = preferenceQueryService.getPreference();
@@ -231,11 +215,9 @@ public class ArticleReceiver {
             article.put(Common.POST_TO_COMMUNITY, false); // Do not send to rhythm
             article.put(Article.ARTICLE_COMMENTABLE, true);
             article.put(Article.ARTICLE_VIEW_PWD, "");
-            String content = article.getString(Article.ARTICLE_CONTENT);
-
-//            content += "\n\n<p style='font-size: 12px;'><i>该文章同步自 <a href='https://hacpai.com/article/" + articleId
-//                + "' target='_blank'>黑客派</a></i></p>";
+            final String content = article.getString(Article.ARTICLE_CONTENT);
             article.put(Article.ARTICLE_CONTENT, content);
+            article.put(Article.ARTICLE_SIGN_ID, "1");
 
             articleMgmtService.updateArticle(requestJSONObject);
 

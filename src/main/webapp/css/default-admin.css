@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 * admin style
 *
 * @author <a href="http://vanessa.b3log.org">Liyuan Li</a>
-* @version 2.3.8.4, May 31, 2017
+* @version 2.5.0.0, Feb 25, 2018
 */
 
 /* start resset */
@@ -161,6 +161,15 @@ a:hover {
     border-bottom-color: #bbb;
     border-radius: 3px;
     box-shadow: inset 0 -1px 0 #bbb; 
+}
+
+.content-reset img {
+    max-width: 100%;
+    vertical-align: middle;
+    border: 0;
+    height: auto;
+    overflow: hidden;
+    font-size: 12px;
 }
 
 .tooltipped {
@@ -920,6 +929,27 @@ table.form th {
     width: 170px;
 }
 
+.article__thumbnail {
+    margin: 10px auto 20px;
+    display: none;
+    width: 800px;
+}
+
+.article__thumbnail .thumbnail__img {
+    background-color: rgba(0,0,0,.02);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: 50%;
+    height: 180px;
+    width: 720px;
+    float: left;
+}
+
+.article__thumbnail button {
+    float: left;
+    margin: 148px 0 0 20px;
+}
+
 button#submitArticle {
     background-color: #fa8564;
     border-color: #fa8564;
@@ -1118,6 +1148,11 @@ button#submitArticle:hover {
     margin-top: 6px;
     padding: 3px;
     width: 22px;
+    color: #1fb5ad;
+}
+
+.dialog-header-bg .icon-close:hover {
+    color: #1ca59e;
 }
 
 .dialog-main {
@@ -1252,4 +1287,11 @@ button#submitArticle:hover {
     padding: 3px;
     position: absolute;
     z-index: 1;
+}
+
+.navigation-icon {
+    height: 18px;
+    width: 18px;
+    float: left;
+    margin: -1px 10px 0 0;
 }

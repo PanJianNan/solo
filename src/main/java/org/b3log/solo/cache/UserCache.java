@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.b3log.latke.cache.Cache;
 import org.b3log.latke.cache.CacheFactory;
 import org.b3log.latke.ioc.inject.Named;
 import org.b3log.latke.ioc.inject.Singleton;
+import org.b3log.latke.model.Role;
 import org.b3log.latke.model.User;
 import org.b3log.solo.util.JSONs;
 import org.json.JSONObject;
@@ -28,7 +29,7 @@ import org.json.JSONObject;
  * User cache.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.0.0.0, Jul 22, 2017
+ * @version 1.1.0.0, Aug 27, 2017
  * @since 2.3.0
  */
 @Named
@@ -38,12 +39,35 @@ public class UserCache {
     /**
      * Id, User.
      */
-    private static final Cache ID_CACHE = CacheFactory.getCache(User.USERS + "ID");
+    private Cache idCache = CacheFactory.getCache(User.USERS + "ID");
 
     /**
      * Email, User.
      */
-    private static final Cache EMAIL_CACHE = CacheFactory.getCache(User.USERS + "Email");
+    private Cache emailCache = CacheFactory.getCache(User.USERS + "Email");
+
+    /**
+     * Admin user.
+     */
+    private Cache adminCache = CacheFactory.getCache("adminUser");
+
+    /**
+     * Gets the admin user.
+     *
+     * @return admin user
+     */
+    public JSONObject getAdmin() {
+        return adminCache.get(Role.ADMIN_ROLE);
+    }
+
+    /**
+     * Adds or updates the admin user.
+     *
+     * @param admin the specified admin user
+     */
+    public void putAdmin(final JSONObject admin) {
+        adminCache.put(Role.ADMIN_ROLE, admin);
+    }
 
     /**
      * Gets a user by the specified user id.
@@ -52,7 +76,7 @@ public class UserCache {
      * @return user, returns {@code null} if not found
      */
     public JSONObject getUser(final String userId) {
-        final JSONObject user = ID_CACHE.get(userId);
+        final JSONObject user = idCache.get(userId);
         if (null == user) {
             return null;
         }
@@ -67,7 +91,7 @@ public class UserCache {
      * @return user, returns {@code null} if not found
      */
     public JSONObject getUserByEmail(final String userEmail) {
-        final JSONObject user = EMAIL_CACHE.get(userEmail);
+        final JSONObject user = emailCache.get(userEmail);
         if (null == user) {
             return null;
         }
@@ -81,8 +105,8 @@ public class UserCache {
      * @param user the specified user
      */
     public void putUser(final JSONObject user) {
-        ID_CACHE.put(user.optString(Keys.OBJECT_ID), JSONs.clone(user));
-        EMAIL_CACHE.put(user.optString(User.USER_EMAIL), JSONs.clone(user));
+        idCache.put(user.optString(Keys.OBJECT_ID), JSONs.clone(user));
+        emailCache.put(user.optString(User.USER_EMAIL), JSONs.clone(user));
     }
 
     /**
@@ -91,14 +115,14 @@ public class UserCache {
      * @param id the specified user id
      */
     public void removeUser(final String id) {
-        final JSONObject user = ID_CACHE.get(id);
+        final JSONObject user = idCache.get(id);
         if (null == user) {
             return;
         }
 
-        ID_CACHE.remove(id);
+        idCache.remove(id);
 
         final String email = user.optString(User.USER_EMAIL);
-        EMAIL_CACHE.remove(email);
+        emailCache.remove(email);
     }
 }

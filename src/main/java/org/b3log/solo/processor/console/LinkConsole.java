@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import javax.servlet.http.HttpServletResponse;
  * Link console request processing.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.0.0.3, Aug 9, 2012
+ * @version 1.0.0.4, Mar 3, 2018
  * @since 0.4.0
  */
 @RequestProcessor
@@ -133,21 +133,23 @@ public class LinkConsole {
      * </pre>
      * </p>
      *
-     * @param request  the specified http servlet request, for example,
-     *                 {
-     *                 "link": {
-     *                 "oId": "",
-     *                 "linkTitle": "",
-     *                 "linkAddress": "",
-     *                 "linkDescription": ""
-     *                 }
-     *                 }, see {@link org.b3log.solo.model.Link} for more details
-     * @param context  the specified http request context
-     * @param response the specified http servlet response
+     * @param request           the specified http servlet request
+     * @param context           the specified http request context
+     * @param response          the specified http servlet response
+     * @param requestJSONObject the specified request json object, for example,
+     *                          {
+     *                          "link": {
+     *                          "oId": "",
+     *                          "linkTitle": "",
+     *                          "linkAddress": "",
+     *                          "linkDescription": ""
+     *                          }
+     *                          }, see {@link org.b3log.solo.model.Link} for more details
      * @throws Exception exception
      */
     @RequestProcessing(value = "/console/link/", method = HTTPRequestMethod.PUT)
-    public void updateLink(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context)
+    public void updateLink(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context,
+                           final JSONObject requestJSONObject)
             throws Exception {
         if (!userQueryService.isAdminLoggedIn(request)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -160,8 +162,6 @@ public class LinkConsole {
         final JSONObject ret = new JSONObject();
 
         try {
-            final JSONObject requestJSONObject = Requests.parseRequestJSONObject(request, response);
-
             linkMgmtService.updateLink(requestJSONObject);
 
             ret.put(Keys.STATUS_CODE, true);
@@ -190,20 +190,19 @@ public class LinkConsole {
      * </pre>
      * </p>
      *
-     * @param request  the specified http servlet request, for example,
-     *                 {
-     *                 "oId": "",
-     *                 "direction": "" // "up"/"down"
-     *                 }
-     * @param response the specified http servlet response
-     * @param context  the specified http request context
+     * @param request           the specified http servlet request
+     * @param response          the specified http servlet response
+     * @param context           the specified http request context
+     * @param requestJSONObject the specified request json object, for example,
+     *                          {
+     *                          "oId": "",
+     *                          "direction": "" // "up"/"down"
+     *                          }
      * @throws Exception exception
      */
     @RequestProcessing(value = "/console/link/order/", method = HTTPRequestMethod.PUT)
-    public void changeOrder(final HttpServletRequest request,
-                            final HttpServletResponse response,
-                            final HTTPRequestContext context)
-            throws Exception {
+    public void changeOrder(final HttpServletRequest request, final HttpServletResponse response,
+                            final HTTPRequestContext context, final JSONObject requestJSONObject) throws Exception {
         if (!userQueryService.isAdminLoggedIn(request)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
 
@@ -216,7 +215,6 @@ public class LinkConsole {
         final JSONObject ret = new JSONObject();
 
         try {
-            final JSONObject requestJSONObject = Requests.parseRequestJSONObject(request, response);
             final String linkId = requestJSONObject.getString(Keys.OBJECT_ID);
             final String direction = requestJSONObject.getString(Common.DIRECTION);
 
@@ -249,21 +247,22 @@ public class LinkConsole {
      * </pre>
      * </p>
      *
-     * @param request  the specified http servlet request, for example,
-     *                 {
-     *                 "link": {
-     *                 "linkTitle": "",
-     *                 "linkAddress": "",
-     *                 "linkDescription": ""
-     *                 }
-     *                 }
-     * @param response the specified http servlet response
-     * @param context  the specified http request context
+     * @param request           the specified http servlet request
+     * @param response          the specified http servlet response
+     * @param context           the specified http request context
+     * @param requestJSONObject the specified request json object, for example,
+     *                          {
+     *                          "link": {
+     *                          "linkTitle": "",
+     *                          "linkAddress": "",
+     *                          "linkDescription": ""
+     *                          }
+     *                          }
      * @throws Exception exception
      */
     @RequestProcessing(value = "/console/link/", method = HTTPRequestMethod.POST)
-    public void addLink(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context)
-            throws Exception {
+    public void addLink(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context,
+                        final JSONObject requestJSONObject) throws Exception {
         if (!userQueryService.isAdminLoggedIn(request)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
@@ -275,8 +274,6 @@ public class LinkConsole {
         final JSONObject ret = new JSONObject();
 
         try {
-            final JSONObject requestJSONObject = Requests.parseRequestJSONObject(request, response);
-
             final String linkId = linkMgmtService.addLink(requestJSONObject);
 
             ret.put(Keys.OBJECT_ID, linkId);

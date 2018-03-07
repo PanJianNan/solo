@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.b3log.solo.processor;
 
-
 import freemarker.template.Template;
 import org.apache.commons.lang.StringUtils;
 import org.b3log.latke.Keys;
@@ -29,7 +28,6 @@ import org.b3log.latke.servlet.HTTPRequestMethod;
 import org.b3log.latke.servlet.annotation.RequestProcessing;
 import org.b3log.latke.servlet.annotation.RequestProcessor;
 import org.b3log.latke.servlet.renderer.JSONRenderer;
-import org.b3log.latke.util.Requests;
 import org.b3log.latke.util.freemarker.Templates;
 import org.b3log.solo.model.*;
 import org.b3log.solo.service.CommentMgmtService;
@@ -41,22 +39,18 @@ import org.b3log.solo.util.RandomNameUtil;
 import org.b3log.solo.util.Skins;
 import org.json.JSONObject;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
-
 
 /**
  * Comment processor.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
  * @author ArmstrongCN
- * @version 1.3.2.14, May 21, 2017
+ * @version 1.3.3.1, Mar 3, 2018
  * @since 0.3.1
  */
 @RequestProcessor
@@ -65,7 +59,7 @@ public class CommentProcessor {
     /**
      * Logger.
      */
-    private static final Logger LOGGER = Logger.getLogger(CommentProcessor.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CommentProcessor.class);
 
     /**
      * Language service.
@@ -113,23 +107,21 @@ public class CommentProcessor {
      * </pre>
      * </p>
      *
-     * @param context the specified context, including a request json object, for example,
-     *                "captcha": "",
-     *                "oId": pageId,
-     *                "commentName": "",
-     *                "commentEmail": "",
-     *                "commentURL": "",
-     *                "commentContent": "", // HTML
-     *                "commentOriginalCommentId": "" // optional, if exists this key, the comment is an reply
-     * @throws ServletException servlet exception
-     * @throws IOException      io exception
+     * @param context           the specified context
+     * @param requestJSONObject the specified request json object, for example,
+     *                          "captcha": "",
+     *                          "oId": pageId,
+     *                          "commentName": "",
+     *                          "commentEmail": "",
+     *                          "commentURL": "",
+     *                          "commentContent": "", // HTML
+     *                          "commentOriginalCommentId": "" // optional, if exists this key, the comment is an reply
      */
     @RequestProcessing(value = "/add-page-comment.do", method = HTTPRequestMethod.POST)
-    public void addPageComment(final HTTPRequestContext context) throws ServletException, IOException {
+    public void addPageComment(final HTTPRequestContext context, final JSONObject requestJSONObject) {
         final HttpServletRequest httpServletRequest = context.getRequest();
         final HttpServletResponse httpServletResponse = context.getResponse();
 
-        final JSONObject requestJSONObject = Requests.parseRequestJSONObject(httpServletRequest, httpServletResponse);
         requestJSONObject.put(Common.TYPE, Page.PAGE);
 
         fillCommenter(requestJSONObject, httpServletRequest, httpServletResponse);
@@ -144,22 +136,9 @@ public class CommentProcessor {
             return;
         }
 
-        final HttpSession session = httpServletRequest.getSession(false);
-
-        if (null == session) {
-            jsonObject.put(Keys.STATUS_CODE, false);
-            jsonObject.put(Keys.MSG, langPropsService.get("captchaErrorLabel"));
-
-            return;
-        }
-
-        final String storedCaptcha = (String) session.getAttribute(CaptchaProcessor.CAPTCHA);
-        session.removeAttribute(CaptchaProcessor.CAPTCHA);
-
         if (!userQueryService.isLoggedIn(httpServletRequest, httpServletResponse)) {
             final String captcha = requestJSONObject.optString(CaptchaProcessor.CAPTCHA);
-
-            if (null == storedCaptcha || !storedCaptcha.equals(captcha)) {
+            if (CaptchaProcessor.invalidCaptcha(captcha)) {
                 jsonObject.put(Keys.STATUS_CODE, false);
                 jsonObject.put(Keys.MSG, langPropsService.get("captchaErrorLabel"));
 
@@ -224,23 +203,21 @@ public class CommentProcessor {
      * </pre>
      * </p>
      *
-     * @param context the specified context, including a request json object, for example,
-     *                "captcha": "",
-     *                "oId": articleId,
-     *                "commentName": "",
-     *                "commentEmail": "",
-     *                "commentURL": "",
-     *                "commentContent": "",
-     *                "commentOriginalCommentId": "" // optional, if exists this key, the comment is an reply
-     * @throws ServletException servlet exception
-     * @throws IOException      io exception
+     * @param context           the specified context, including a request json object
+     * @param requestJSONObject the specified request json object, for example,
+     *                          "captcha": "",
+     *                          "oId": articleId,
+     *                          "commentName": "",
+     *                          "commentEmail": "",
+     *                          "commentURL": "",
+     *                          "commentContent": "",
+     *                          "commentOriginalCommentId": "" // optional, if exists this key, the comment is an reply
      */
     @RequestProcessing(value = "/add-article-comment.do", method = HTTPRequestMethod.POST)
-    public void addArticleComment(final HTTPRequestContext context) throws ServletException, IOException {
+    public void addArticleComment(final HTTPRequestContext context, final JSONObject requestJSONObject) {
         final HttpServletRequest httpServletRequest = context.getRequest();
         final HttpServletResponse httpServletResponse = context.getResponse();
 
-        final JSONObject requestJSONObject = Requests.parseRequestJSONObject(httpServletRequest, httpServletResponse);
         requestJSONObject.put(Common.TYPE, Article.ARTICLE);
 
         fillCommenter(requestJSONObject, httpServletRequest, httpServletResponse);
@@ -255,20 +232,9 @@ public class CommentProcessor {
             return;
         }
 
-        final HttpSession session = httpServletRequest.getSession(false);
-        if (null == session) {
-            jsonObject.put(Keys.STATUS_CODE, false);
-            jsonObject.put(Keys.MSG, langPropsService.get("captchaErrorLabel"));
-
-            return;
-        }
-
-        final String storedCaptcha = (String) session.getAttribute(CaptchaProcessor.CAPTCHA);
-        session.removeAttribute(CaptchaProcessor.CAPTCHA);
-
         if (!userQueryService.isLoggedIn(httpServletRequest, httpServletResponse)) {
             final String captcha = requestJSONObject.optString(CaptchaProcessor.CAPTCHA);
-            if (null == storedCaptcha || !storedCaptcha.equals(captcha)) {
+            if (CaptchaProcessor.invalidCaptcha(captcha)) {
                 jsonObject.put(Keys.STATUS_CODE, false);
                 jsonObject.put(Keys.MSG, langPropsService.get("captchaErrorLabel"));
 
@@ -297,7 +263,6 @@ public class CommentProcessor {
                 template.process(dataModel, stringWriter);
                 stringWriter.close();
                 String cmtTpl = stringWriter.toString();
-                cmtTpl = Emotions.convert(cmtTpl);
 
                 addResult.put("cmtTpl", cmtTpl);
             } catch (final Exception e) {

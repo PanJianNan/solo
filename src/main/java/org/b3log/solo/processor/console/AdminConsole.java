@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@ package org.b3log.solo.processor.console;
 
 import com.qiniu.util.Auth;
 import jodd.io.ZipUtil;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateFormatUtils;
 import org.b3log.latke.Keys;
 import org.b3log.latke.Latkes;
 import org.b3log.latke.event.Event;
@@ -47,6 +49,7 @@ import org.b3log.solo.model.Skin;
 import org.b3log.solo.model.UserExt;
 import org.b3log.solo.processor.renderer.ConsoleRenderer;
 import org.b3log.solo.processor.util.Filler;
+import org.b3log.solo.service.ExportService;
 import org.b3log.solo.service.OptionQueryService;
 import org.b3log.solo.service.PreferenceQueryService;
 import org.b3log.solo.service.UserQueryService;
@@ -69,7 +72,7 @@ import java.util.*;
  * Admin console render processing.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.5.2.13, Jul 9, 2017
+ * @version 1.7.0.1, Nov 20, 2017
  * @since 0.4.1
  */
 @RequestProcessor
@@ -105,6 +108,12 @@ public class AdminConsole {
     private UserQueryService userQueryService;
 
     /**
+     * Export service.
+     */
+    @Inject
+    private ExportService exportService;
+
+    /**
      * Filler.
      */
     @Inject
@@ -115,6 +124,12 @@ public class AdminConsole {
      */
     @Inject
     private EventManager eventManager;
+
+    private static String sanitizeFilename(String unsanitized) {
+        return unsanitized
+                .replaceAll("[\\?\\\\/:|<>\\*]", " ") // filter out ? \ / : | < > *
+                .replaceAll("\\s+", "_");              // white space as underscores
+    }
 
     /**
      * Shows administrator index with the specified context.
@@ -293,7 +308,7 @@ public class AdminConsole {
     }
 
     /**
-     * Exports data as SQL file.
+     * Exports data as SQL zip file.
      *
      * @param request  the specified HTTP servlet request
      * @param response the specified HTTP servlet response
@@ -308,6 +323,8 @@ public class AdminConsole {
 
             return;
         }
+
+        Thread.sleep(550); // 前端会发两次请求，文件名又是按秒生成，所以两次请求需要错开至少 1 秒避免文件名冲突
 
         final Latkes.RuntimeDatabase runtimeDatabase = Latkes.getRuntimeDatabase();
         if (Latkes.RuntimeDatabase.H2 != runtimeDatabase && Latkes.RuntimeDatabase.MYSQL != runtimeDatabase) {
@@ -375,7 +392,8 @@ public class AdminConsole {
         }
 
         final String tmpDir = System.getProperty("java.io.tmpdir");
-        String localFilePath = tmpDir + File.separator + "b3_solo_" + UUID.randomUUID().toString() + ".sql";
+        final String date = DateFormatUtils.format(new Date(), "yyyyMMddHHmmss");
+        String localFilePath = tmpDir + File.separator + "solo-" + date + ".sql";
         LOGGER.trace(localFilePath);
         final File localFile = new File(localFilePath);
 
@@ -393,7 +411,8 @@ public class AdminConsole {
             IOUtils.closeQuietly(inputStream);
 
             response.setContentType("application/zip");
-            response.setHeader("Content-Disposition", "attachment; filename=\"solo.sql.zip\"");
+            final String fileName = "solo-sql-" + date + ".zip";
+            response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
 
             final ServletOutputStream outputStream = response.getOutputStream();
             outputStream.write(zipData);
@@ -404,7 +423,131 @@ public class AdminConsole {
             context.renderJSON().renderMsg("Export failed, please check log");
 
             return;
+        }
+    }
 
+    /**
+     * Exports data as JSON zip file.
+     *
+     * @param request  the specified HTTP servlet request
+     * @param response the specified HTTP servlet response
+     * @param context  the specified HTTP request context
+     * @throws Exception exception
+     */
+    @RequestProcessing(value = "/console/export/json", method = HTTPRequestMethod.GET)
+    public void exportJSON(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context)
+            throws Exception {
+        if (!userQueryService.isAdminLoggedIn(request)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+
+            return;
+        }
+
+        Thread.sleep(550);
+
+        final String tmpDir = System.getProperty("java.io.tmpdir");
+        final String date = DateFormatUtils.format(new Date(), "yyyyMMddHHmmss");
+        String localFilePath = tmpDir + File.separator + "solo-" + date + ".json";
+        LOGGER.trace(localFilePath);
+        final File localFile = new File(localFilePath);
+
+        try {
+            final JSONObject json = exportService.getJSONs();
+            final byte[] data = json.toString(4).getBytes("UTF-8");
+
+            final OutputStream output = new FileOutputStream(localFile);
+            IOUtils.write(data, output);
+            IOUtils.closeQuietly(output);
+
+            final File zipFile = ZipUtil.zip(localFile);
+
+            final FileInputStream inputStream = new FileInputStream(zipFile);
+            final byte[] zipData = IOUtils.toByteArray(inputStream);
+            IOUtils.closeQuietly(inputStream);
+
+            response.setContentType("application/zip");
+            final String fileName = "solo-json-" + date + ".zip";
+            response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+
+            final ServletOutputStream outputStream = response.getOutputStream();
+            outputStream.write(zipData);
+            outputStream.flush();
+            outputStream.close();
+        } catch (final Exception e) {
+            LOGGER.log(Level.ERROR, "Export failed", e);
+            context.renderJSON().renderMsg("Export failed, please check log");
+
+            return;
+        }
+    }
+
+    /**
+     * Exports data as Hexo markdown zip file.
+     *
+     * @param request  the specified HTTP servlet request
+     * @param response the specified HTTP servlet response
+     * @param context  the specified HTTP request context
+     * @throws Exception exception
+     */
+    @RequestProcessing(value = "/console/export/hexo", method = HTTPRequestMethod.GET)
+    public void exportHexo(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context)
+            throws Exception {
+        if (!userQueryService.isAdminLoggedIn(request)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+
+            return;
+        }
+
+        Thread.sleep(550);
+
+        final String tmpDir = System.getProperty("java.io.tmpdir");
+        final String date = DateFormatUtils.format(new Date(), "yyyyMMddHHmmss");
+        String localFilePath = tmpDir + File.separator + "solo-hexo-" + date;
+        LOGGER.trace(localFilePath);
+        final File localFile = new File(localFilePath);
+
+        final File postDir = new File(localFilePath + File.separator + "posts");
+        final File passwordDir = new File(localFilePath + File.separator + "passwords");
+        final File draftDir = new File(localFilePath + File.separator + "drafts");
+
+        try {
+            if (!postDir.mkdirs()) {
+                throw new Exception("Create dir [" + postDir.getPath() + "] failed");
+            }
+            if (!passwordDir.mkdirs()) {
+                throw new Exception("Create dir [" + passwordDir.getPath() + "] failed");
+            }
+            if (!draftDir.mkdirs()) {
+                throw new Exception("Create dir [" + draftDir.getPath() + "] failed");
+            }
+
+            final JSONObject result = exportService.exportHexoMDs();
+            final List<JSONObject> posts = (List<JSONObject>) result.opt("posts");
+            exportHexoMd(posts, postDir.getPath());
+            final List<JSONObject> passwords = (List<JSONObject>) result.opt("passwords");
+            exportHexoMd(passwords, passwordDir.getPath());
+            final List<JSONObject> drafts = (List<JSONObject>) result.opt("drafts");
+            exportHexoMd(drafts, draftDir.getPath());
+
+            final File zipFile = ZipUtil.zip(localFile);
+
+            final FileInputStream inputStream = new FileInputStream(zipFile);
+            final byte[] zipData = IOUtils.toByteArray(inputStream);
+            IOUtils.closeQuietly(inputStream);
+
+            response.setContentType("application/zip");
+            final String fileName = "solo-hexo-" + date + ".zip";
+            response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+
+            final ServletOutputStream outputStream = response.getOutputStream();
+            outputStream.write(zipData);
+            outputStream.flush();
+            outputStream.close();
+        } catch (final Exception e) {
+            LOGGER.log(Level.ERROR, "Export failed", e);
+            context.renderJSON().renderMsg("Export failed, please check log");
+
+            return;
         }
     }
 
@@ -428,5 +571,18 @@ public class AdminConsole {
         } catch (final EventException e) {
             LOGGER.log(Level.WARN, "Event[FREEMARKER_ACTION] handle failed, ignores this exception for kernel health", e);
         }
+    }
+
+    private void exportHexoMd(final List<JSONObject> articles, final String dirPath) {
+        articles.forEach(article -> {
+            final String filename = sanitizeFilename(article.optString("title")) + ".md";
+            final String text = article.optString("front") + "---" + Strings.LINE_SEPARATOR + article.optString("content");
+
+            try {
+                FileUtils.writeStringToFile(new File(dirPath + File.separator + filename), text, "UTF-8");
+            } catch (final Exception e) {
+                LOGGER.log(Level.ERROR, "Write markdown file failed", e);
+            }
+        });
     }
 }

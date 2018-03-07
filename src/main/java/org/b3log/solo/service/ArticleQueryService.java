@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ import static org.b3log.solo.model.Article.*;
  * @author <a href="http://blog.sweelia.com">ArmstrongCN</a>
  * @author <a href="http://zephyr.b3log.org">Zephyr</a>
  * @author <a href="http://vanessa.b3log.org">Liyuan Li</a>
- * @version 1.2.4.4, Apr 8, 2017
+ * @version 1.3.2.0, Nov 24, 2017
  * @since 0.3.5
  */
 @Service
@@ -122,6 +122,50 @@ public class ArticleQueryService {
      */
     @Inject
     private LangPropsService langPropsService;
+
+    /**
+     * Searches articles with the specified keyword.
+     *
+     * @param keyword        the specified keyword
+     * @param currentPageNum the specified current page number
+     * @param pageSize       the specified page size
+     * @return result
+     */
+    public JSONObject searchKeyword(final String keyword, final int currentPageNum, final int pageSize) {
+        final JSONObject ret = new JSONObject();
+        ret.put(Article.ARTICLES, (Object) Collections.emptyList());
+
+        final JSONObject pagination = new JSONObject();
+        ret.put(Pagination.PAGINATION, pagination);
+        pagination.put(Pagination.PAGINATION_PAGE_COUNT, 0);
+        pagination.put(Pagination.PAGINATION_PAGE_NUMS, (Object) Collections.emptyList());
+
+        try {
+            final Query query = new Query().setFilter(
+                    CompositeFilterOperator.and(
+                            new PropertyFilter(Article.ARTICLE_IS_PUBLISHED, FilterOperator.EQUAL, true),
+                            CompositeFilterOperator.or(
+                                    new PropertyFilter(Article.ARTICLE_TITLE, FilterOperator.LIKE, "%" + keyword + "%"),
+                                    new PropertyFilter(Article.ARTICLE_CONTENT, FilterOperator.LIKE, "%" + keyword + "%"))
+                    )).addSort(Article.ARTICLE_UPDATE_DATE, SortDirection.DESCENDING).setCurrentPageNum(currentPageNum).setPageSize(pageSize);
+
+            final JSONObject result = articleRepository.get(query);
+
+            final int pageCount = result.optJSONObject(Pagination.PAGINATION).optInt(Pagination.PAGINATION_PAGE_COUNT);
+            final JSONObject preference = preferenceQueryService.getPreference();
+            final int windowSize = preference.optInt(Option.ID_C_ARTICLE_LIST_PAGINATION_WINDOW_SIZE);
+            final List<Integer> pageNums = Paginator.paginate(currentPageNum, pageSize, pageCount, windowSize);
+            pagination.put(Pagination.PAGINATION_PAGE_COUNT, pageCount);
+            pagination.put(Pagination.PAGINATION_PAGE_NUMS, (Object) pageNums);
+
+            final List<JSONObject> articles = CollectionUtils.jsonArrayToList(result.optJSONArray(Keys.RESULTS));
+            ret.put(Article.ARTICLES, (Object) articles);
+        } catch (final RepositoryException | ServiceException e) {
+            LOGGER.log(Level.ERROR, "Searches articles error", e);
+        }
+
+        return ret;
+    }
 
     /**
      * Gets category articles.
@@ -526,7 +570,8 @@ public class ArticleQueryService {
      *                          "paginationPageSize": 20,
      *                          "paginationWindowSize": 10,
      *                          "articleIsPublished": boolean,
-     *                          "excludes": ["", ....] // Optional
+     *                          "excludes": ["", ....], // Optional
+     *                          "enableArticleUpdateHint": bool // Optional
      *                          see {@link Pagination} for more details
      * @return for example,      <pre>
      * {
@@ -561,11 +606,16 @@ public class ArticleQueryService {
             final int windowSize = requestJSONObject.getInt(Pagination.PAGINATION_WINDOW_SIZE);
             final boolean articleIsPublished = requestJSONObject.optBoolean(ARTICLE_IS_PUBLISHED, true);
 
-            final Query query = new Query().setCurrentPageNum(currentPageNum).setPageSize(pageSize).addSort(ARTICLE_PUT_TOP, SortDirection.DESCENDING).addSort(ARTICLE_CREATE_DATE, SortDirection.DESCENDING).setFilter(
-                    new PropertyFilter(ARTICLE_IS_PUBLISHED, FilterOperator.EQUAL, articleIsPublished));
+            final Query query = new Query().setCurrentPageNum(currentPageNum).setPageSize(pageSize).
+                    addSort(ARTICLE_PUT_TOP, SortDirection.DESCENDING);
+            if (requestJSONObject.optBoolean(Option.ID_C_ENABLE_ARTICLE_UPDATE_HINT)) {
+                query.addSort(ARTICLE_UPDATE_DATE, SortDirection.DESCENDING);
+            } else {
+                query.addSort(ARTICLE_CREATE_DATE, SortDirection.DESCENDING);
+            }
+            query.setFilter(new PropertyFilter(ARTICLE_IS_PUBLISHED, FilterOperator.EQUAL, articleIsPublished));
 
             int articleCount = statisticQueryService.getBlogArticleCount();
-
             if (!articleIsPublished) {
                 articleCount -= statisticQueryService.getPublishedBlogArticleCount();
             } else {
@@ -573,31 +623,25 @@ public class ArticleQueryService {
             }
 
             final int pageCount = (int) Math.ceil((double) articleCount / (double) pageSize);
-
             query.setPageCount(pageCount);
 
             final JSONObject result = articleRepository.get(query);
 
             final JSONObject pagination = new JSONObject();
-
             ret.put(Pagination.PAGINATION, pagination);
             final List<Integer> pageNums = Paginator.paginate(currentPageNum, pageSize, pageCount, windowSize);
-
             pagination.put(Pagination.PAGINATION_PAGE_COUNT, pageCount);
             pagination.put(Pagination.PAGINATION_PAGE_NUMS, pageNums);
 
             final JSONArray articles = result.getJSONArray(Keys.RESULTS);
             JSONArray excludes = requestJSONObject.optJSONArray(Keys.EXCLUDES);
-
             excludes = null == excludes ? new JSONArray() : excludes;
 
             for (int i = 0; i < articles.length(); i++) {
                 final JSONObject article = articles.getJSONObject(i);
                 final JSONObject author = getAuthor(article);
                 final String authorName = author.getString(User.USER_NAME);
-
                 article.put(Common.AUTHOR_NAME, authorName);
-
                 article.put(ARTICLE_CREATE_TIME, ((Date) article.get(ARTICLE_CREATE_DATE)).getTime());
                 article.put(ARTICLE_UPDATE_TIME, ((Date) article.get(ARTICLE_UPDATE_DATE)).getTime());
 

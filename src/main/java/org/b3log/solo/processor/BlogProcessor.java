@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import org.b3log.latke.util.Strings;
 import org.b3log.solo.SoloServletListener;
 import org.b3log.solo.model.Article;
 import org.b3log.solo.model.Option;
-import org.b3log.solo.model.Statistic;
 import org.b3log.solo.model.Tag;
 import org.b3log.solo.service.*;
 import org.json.JSONArray;
@@ -51,7 +50,7 @@ import java.util.Set;
  * Blog processor.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.3.0.5, Jul 6, 2017
+ * @version 1.3.1.0, Nov 15, 2017
  * @since 0.4.6
  */
 @RequestProcessor
@@ -93,6 +92,12 @@ public class BlogProcessor {
     private PreferenceQueryService preferenceQueryService;
 
     /**
+     * Option query service.
+     */
+    @Inject
+    private OptionQueryService optionQueryService;
+
+    /**
      * URL fetch service.
      */
     private final URLFetchService urlFetchService = URLFetchServiceFactory.getURLFetchService();
@@ -107,8 +112,10 @@ public class BlogProcessor {
      * <li>Serve path</li>
      * <li>Static serve path</li>
      * <li>Solo version</li>
-     * <li>Runtime environment (LOCAL)</li>
+     * <li>Runtime mode</li>
+     * <li>Runtime database</li>
      * <li>Locale</li>
+     * <li>Admin username</li>
      * </ul>
      *
      * @param context the specified context
@@ -123,16 +130,23 @@ public class BlogProcessor {
 
         jsonObject.put("recentArticleTime", articleQueryService.getRecentArticleTime());
         final JSONObject statistic = statisticQueryService.getStatistic();
-
-        jsonObject.put("articleCount", statistic.getLong(Statistic.STATISTIC_PUBLISHED_ARTICLE_COUNT));
-        jsonObject.put("commentCount", statistic.getLong(Statistic.STATISTIC_PUBLISHED_BLOG_COMMENT_COUNT));
+        jsonObject.put("articleCount", statistic.getLong(Option.ID_C_STATISTIC_PUBLISHED_ARTICLE_COUNT));
+        jsonObject.put("commentCount", statistic.getLong(Option.ID_C_STATISTIC_PUBLISHED_BLOG_COMMENT_COUNT));
         jsonObject.put("tagCount", tagQueryService.getTagCount());
         jsonObject.put("servePath", Latkes.getServePath());
         jsonObject.put("staticServePath", Latkes.getStaticServePath());
         jsonObject.put("version", SoloServletListener.VERSION);
-        jsonObject.put("locale", Latkes.getLocale());
         jsonObject.put("runtimeMode", Latkes.getRuntimeMode());
         jsonObject.put("runtimeDatabase", Latkes.getRuntimeDatabase());
+        jsonObject.put("locale", Latkes.getLocale());
+        jsonObject.put("userName", userQueryService.getAdmin().optString(User.USER_NAME));
+        jsonObject.put("qiniuDomain", "");
+        jsonObject.put("qiniuBucket", "");
+        final JSONObject qiniu = optionQueryService.getOptions(Option.CATEGORY_C_QINIU);
+        if (null != qiniu) {
+            jsonObject.put("qiniuDomain", qiniu.optString(Option.ID_C_QINIU_DOMAIN));
+            jsonObject.put("qiniuBucket", qiniu.optString(Option.ID_C_QINIU_BUCKET));
+        }
     }
 
     /**

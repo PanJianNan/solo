@@ -4,7 +4,15 @@
         <input id="title" type="text"/>
     </div>
     <div>
-        <label>${content1Label}</label>
+            <label>${content1Label}</label>
+            <div class="right">
+                <label for="articleThumbnail">${useTumbnailLabel}</label>
+                <input type="checkbox" id="articleThumbnail" onclick="$('.article__thumbnail').slideToggle()" />
+            </div>
+        <div class="article__thumbnail fn-clear">
+            <div class="thumbnail__img"></div>
+            <button id="articleThumbnailBtn">${chageLabel}</button>
+        </div>
         <div>
             <textarea id="articleContent" name="articleContent"
                   style="height: 500px;width:100%;"></textarea>

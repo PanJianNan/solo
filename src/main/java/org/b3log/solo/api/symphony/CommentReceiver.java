@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.b3log.latke.servlet.annotation.RequestProcessor;
 import org.b3log.latke.servlet.renderer.JSONRenderer;
 import org.b3log.latke.urlfetch.URLFetchService;
 import org.b3log.latke.urlfetch.URLFetchServiceFactory;
-import org.b3log.latke.util.Requests;
 import org.b3log.latke.util.Strings;
 import org.b3log.solo.event.EventTypes;
 import org.b3log.solo.model.Article;
@@ -47,7 +46,6 @@ import org.b3log.solo.util.Comments;
 import org.b3log.solo.util.QueryResults;
 import org.json.JSONObject;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -57,7 +55,7 @@ import java.util.Date;
  * Comment receiver (from B3log Symphony).
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.1.1.12, Apr 25, 2017
+ * @version 1.1.1.13, Mar 3, 2018
  * @since 0.5.5
  */
 //@RequestProcessor
@@ -66,7 +64,7 @@ public class CommentReceiver {
     /**
      * Logger.
      */
-    private static final Logger LOGGER = Logger.getLogger(CommentReceiver.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CommentReceiver.class);
 
     /**
      * Comment management service.
@@ -117,7 +115,7 @@ public class CommentReceiver {
 
     /**
      * Adds an article with the specified request.
-     *
+     * <p>
      * <p>
      * Renders the response with a json object, for example,
      * <pre>
@@ -127,44 +125,37 @@ public class CommentReceiver {
      * </pre>
      * </p>
      *
-     * @param request the specified http servlet request, for example,      <pre>
-     * {
-     *     "comment": {
-     *         "userB3Key": "",
-     *         "oId": "",
-     *         "commentSymphonyArticleId": "",
-     *         "commentOnArticleId": "",
-     *         "commentAuthorName": "",
-     *         "commentAuthorEmail": "",
-     *         "commentAuthorURL": "",
-     *         "commentAuthorThumbnailURL": "",
-     *         "commentContent": "",
-     *         "commentOriginalCommentId": "" // optional, if exists this key, the comment is an reply
-     *     }
-     * }
-     * </pre>
-     *
-     * @param response the specified http servlet response
-     * @param context the specified http request context
+     * @param context           the specified http request context
+     * @param requestJSONObject the specified http servlet request, for example,
+     *                          {
+     *                          "comment": {
+     *                          "userB3Key": "",
+     *                          "oId": "",
+     *                          "commentSymphonyArticleId": "",
+     *                          "commentOnArticleId": "",
+     *                          "commentAuthorName": "",
+     *                          "commentAuthorEmail": "",
+     *                          "commentAuthorURL": "",
+     *                          "commentAuthorThumbnailURL": "",
+     *                          "commentContent": "",
+     *                          "commentOriginalCommentId": "" // optional, if exists this key, the comment is an reply
+     *                          }
+     *                          }
      * @throws Exception exception
      */
     @RequestProcessing(value = "/apis/symphony/comment", method = HTTPRequestMethod.PUT)
-    public void addComment(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context)
+    public void addComment(final HTTPRequestContext context, final JSONObject requestJSONObject)
             throws Exception {
         if (context != null) {
             return;//不往hacpai同步数据，//todo 同步处理
         }
         final JSONRenderer renderer = new JSONRenderer();
-
         context.setRenderer(renderer);
         final JSONObject ret = new JSONObject();
-
         renderer.setJSONObject(ret);
 
         final Transaction transaction = commentRepository.beginTransaction();
-
         try {
-            final JSONObject requestJSONObject = Requests.parseRequestJSONObject(request, response);
             final JSONObject symphonyCmt = requestJSONObject.optJSONObject(Comment.COMMENT);
             final JSONObject preference = preferenceQueryService.getPreference();
             final String keyOfSolo = preference.optString(Option.ID_C_KEY_OF_SOLO);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.b3log.solo.service.ArticleMgmtService;
 import org.b3log.solo.service.ArticleQueryService;
 import org.b3log.solo.service.UserQueryService;
 import org.b3log.solo.util.Emotions;
+import org.b3log.solo.util.Images;
 import org.b3log.solo.util.Markdowns;
 import org.b3log.solo.util.QueryResults;
 import org.json.JSONArray;
@@ -43,12 +44,14 @@ import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Article console request processing.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.0.0.6, May 30, 2013
+ * @version 1.1.0.1, Mar 3, 2018
  * @since 0.4.0
  */
 @RequestProcessor
@@ -57,7 +60,7 @@ public class ArticleConsole {
     /**
      * Logger.
      */
-    private static final Logger LOGGER = Logger.getLogger(ArticleConsole.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ArticleConsole.class);
 
     /**
      * Article management service.
@@ -84,8 +87,53 @@ public class ArticleConsole {
     private LangPropsService langPropsService;
 
     /**
-     * Markdowns.
+     * Gets article thumbs.
+     * <p>
+     * Renders the response with a json object, for example,
+     * <pre>
+     * {
+     *     "sc": true,
+     *     "data": [
+     *         "https://img.hacpai.com/bing/20171226.jpg?imageView2/1/w/960/h/520/interlace/1/q/100",
+     *         "https://img.hacpai.com/bing/20171105.jpg?imageView2/1/w/960/h/520/interlace/1/q/100",
+     *         "https://img.hacpai.com/bing/20180105.jpg?imageView2/1/w/960/h/520/interlace/1/q/100",
+     *         "https://img.hacpai.com/bing/20171114.jpg?imageView2/1/w/960/h/520/interlace/1/q/100"
+     *     ]
+     * }
+     * </pre>
+     * </p>
      *
+     * @param request  the specified http servlet request
+     * @param response the specified http servlet response
+     * @param context  the specified http request context
+     * @throws Exception exception
+     */
+    @RequestProcessing(value = "/console/thumbs", method = HTTPRequestMethod.GET)
+    public void getArticleThumbs(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context)
+            throws Exception {
+        if (!userQueryService.isLoggedIn(request, response)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+
+        final JSONRenderer renderer = new JSONRenderer();
+        context.setRenderer(renderer);
+        final JSONObject result = new JSONObject();
+        renderer.setJSONObject(result);
+        result.put(Keys.STATUS_CODE, true);
+
+        String strN = request.getParameter("n");
+        if (!Strings.isNumeric(strN)) {
+            strN = "6";
+        }
+
+        final int n = Integer.valueOf(strN);
+        final List<String> urls = Images.randomImages(n);
+        result.put("data", urls.stream().map(url -> url += "?imageView2/1/w/960/h/520/interlace/1/q/100").collect(Collectors.toList()));
+    }
+
+    /**
+     * Markdowns.
      * <p>
      * Renders the response with a json object, for example,
      * <pre>
@@ -95,14 +143,12 @@ public class ArticleConsole {
      * </pre>
      * </p>
      *
-     * @param request the specified http servlet request, for example,      <pre>
-     * {
-     *     "markdownText": ""
-     * }
-     * </pre>
-     *
+     * @param request  the specified http servlet request, for example,
+     *                 {
+     *                 "markdownText": ""
+     *                 }
      * @param response the specified http servlet response
-     * @param context the specified http request context
+     * @param context  the specified http request context
      * @throws Exception exception
      */
     @RequestProcessing(value = "/console/markdown/2html", method = HTTPRequestMethod.POST)
@@ -112,13 +158,10 @@ public class ArticleConsole {
 
         context.setRenderer(renderer);
         final JSONObject result = new JSONObject();
-
         renderer.setJSONObject(result);
-
         result.put(Keys.STATUS_CODE, true);
 
         final String markdownText = request.getParameter("markdownText");
-
         if (Strings.isEmptyOrNull(markdownText)) {
             result.put("html", "");
 
@@ -139,7 +182,6 @@ public class ArticleConsole {
             LOGGER.log(Level.ERROR, e.getMessage(), e);
 
             final JSONObject jsonObject = QueryResults.defaultResult();
-
             renderer.setJSONObject(jsonObject);
             jsonObject.put(Keys.MSG, langPropsService.get("getFailLabel"));
         }
@@ -147,7 +189,6 @@ public class ArticleConsole {
 
     /**
      * Gets an article by the specified request json object.
-     *
      * <p>
      * Renders the response with a json object, for example,
      * <pre>
@@ -172,9 +213,9 @@ public class ArticleConsole {
      * </pre>
      * </p>
      *
-     * @param request the specified http servlet request
+     * @param request  the specified http servlet request
      * @param response the specified http servlet response
-     * @param context the specified http request context
+     * @param context  the specified http request context
      * @throws Exception exception
      */
     @RequestProcessing(value = "/console/article/*", method = HTTPRequestMethod.GET)
@@ -186,21 +227,18 @@ public class ArticleConsole {
         }
 
         final JSONRenderer renderer = new JSONRenderer();
-
         context.setRenderer(renderer);
 
         try {
             final String articleId = request.getRequestURI().substring((Latkes.getContextPath() + "/console/article/").length());
 
             final JSONObject result = articleQueryService.getArticle(articleId);
-
             result.put(Keys.STATUS_CODE, true);
             renderer.setJSONObject(result);
         } catch (final ServiceException e) {
             LOGGER.log(Level.ERROR, e.getMessage(), e);
 
             final JSONObject jsonObject = QueryResults.defaultResult();
-
             renderer.setJSONObject(jsonObject);
             jsonObject.put(Keys.MSG, langPropsService.get("getFailLabel"));
         }
@@ -208,13 +246,11 @@ public class ArticleConsole {
 
     /**
      * Gets articles(by crate date descending) by the specified request json object.
-     *
      * <p>
      * The request URI contains the pagination arguments. For example, the request URI is
      * /console/articles/status/published/1/10/20, means the current page is 1, the page size is 10, and the window size
      * is 20.
      * </p>
-     *
      * <p>
      * Renders the response with a json object, for example,
      * <pre>
@@ -238,9 +274,9 @@ public class ArticleConsole {
      * </pre>, order by article update date and sticky(put top).
      * </p>
      *
-     * @param request the specified http servlet request
+     * @param request  the specified http servlet request
      * @param response the specified http servlet response
-     * @param context the specified http request context
+     * @param context  the specified http request context
      * @throws Exception exception
      */
     @RequestProcessing(value = "/console/articles/status/*/*/*/*"/* Requests.PAGINATION_PATH_PATTERN */,
@@ -253,7 +289,6 @@ public class ArticleConsole {
         }
 
         final JSONRenderer renderer = new JSONRenderer();
-
         context.setRenderer(renderer);
 
         try {
@@ -261,11 +296,8 @@ public class ArticleConsole {
             final String status = StringUtils.substringBefore(path, "/");
 
             path = path.substring((status + "/").length());
-
-            final boolean published = "published".equals(status);
-
             final JSONObject requestJSONObject = Requests.buildPaginationRequest(path);
-
+            final boolean published = "published".equals(status);
             requestJSONObject.put(Article.ARTICLE_IS_PUBLISHED, published);
 
             final JSONArray excludes = new JSONArray();
@@ -287,7 +319,6 @@ public class ArticleConsole {
             LOGGER.log(Level.ERROR, e.getMessage(), e);
 
             final JSONObject jsonObject = QueryResults.defaultResult();
-
             renderer.setJSONObject(jsonObject);
             jsonObject.put(Keys.MSG, langPropsService.get("getFailLabel"));
         }
@@ -295,7 +326,6 @@ public class ArticleConsole {
 
     /**
      * Removes an article by the specified request.
-     *
      * <p>
      * Renders the response with a json object, for example,
      * <pre>
@@ -306,26 +336,23 @@ public class ArticleConsole {
      * </pre>
      * </p>
      *
-     * @param context the specified http request context
-     * @param request the specified http servlet request
-     * @param response the specified http servlet response
+     * @param context   the specified http request context
+     * @param request   the specified http servlet request
+     * @param response  the specified http servlet response
      * @param articleId the specified article id
      * @throws Exception exception
      */
     @RequestProcessing(value = "/console/article/{articleId}", method = HTTPRequestMethod.DELETE)
     public void removeArticle(final HTTPRequestContext context, final HttpServletRequest request, final HttpServletResponse response,
-            final String articleId) throws Exception {
+                              final String articleId) throws Exception {
         if (!userQueryService.isLoggedIn(request, response)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
         final JSONRenderer renderer = new JSONRenderer();
-
         context.setRenderer(renderer);
-
         final JSONObject ret = new JSONObject();
-
         renderer.setJSONObject(ret);
 
         try {
@@ -344,7 +371,6 @@ public class ArticleConsole {
             LOGGER.log(Level.ERROR, e.getMessage(), e);
 
             final JSONObject jsonObject = new JSONObject();
-
             renderer.setJSONObject(jsonObject);
             jsonObject.put(Keys.STATUS_CODE, false);
             jsonObject.put(Keys.MSG, langPropsService.get("removeFailLabel"));
@@ -353,7 +379,6 @@ public class ArticleConsole {
 
     /**
      * Cancels publish an article by the specified request.
-     *
      * <p>
      * Renders the response with a json object, for example,
      * <pre>
@@ -364,8 +389,8 @@ public class ArticleConsole {
      * </pre>
      * </p>
      *
-     * @param context the specified http request context
-     * @param request the specified http servlet request
+     * @param context  the specified http request context
+     * @param request  the specified http servlet request
      * @param response the specified http servlet response
      * @throws Exception exception
      */
@@ -378,11 +403,8 @@ public class ArticleConsole {
         }
 
         final JSONRenderer renderer = new JSONRenderer();
-
         context.setRenderer(renderer);
-
         final JSONObject ret = new JSONObject();
-
         renderer.setJSONObject(ret);
 
         try {
@@ -403,7 +425,6 @@ public class ArticleConsole {
             LOGGER.log(Level.ERROR, e.getMessage(), e);
 
             final JSONObject jsonObject = new JSONObject();
-
             renderer.setJSONObject(jsonObject);
             jsonObject.put(Keys.STATUS_CODE, false);
             jsonObject.put(Keys.MSG, langPropsService.get("unPulbishFailLabel"));
@@ -412,7 +433,6 @@ public class ArticleConsole {
 
     /**
      * Cancels an top article by the specified request.
-     *
      * <p>
      * Renders the response with a json object, for example,
      * <pre>
@@ -423,8 +443,8 @@ public class ArticleConsole {
      * </pre>
      * </p>
      *
-     * @param context the specified http request context
-     * @param request the specified http servlet request
+     * @param context  the specified http request context
+     * @param request  the specified http servlet request
      * @param response the specified http servlet response
      * @throws Exception exception
      */
@@ -437,9 +457,7 @@ public class ArticleConsole {
         }
 
         final JSONRenderer renderer = new JSONRenderer();
-
         context.setRenderer(renderer);
-
         final JSONObject ret = new JSONObject();
 
         renderer.setJSONObject(ret);
@@ -462,7 +480,6 @@ public class ArticleConsole {
             LOGGER.log(Level.ERROR, e.getMessage(), e);
 
             final JSONObject jsonObject = new JSONObject();
-
             renderer.setJSONObject(jsonObject);
             jsonObject.put(Keys.STATUS_CODE, false);
             jsonObject.put(Keys.MSG, langPropsService.get("cancelTopFailLabel"));
@@ -471,7 +488,6 @@ public class ArticleConsole {
 
     /**
      * Puts an article to top by the specified request.
-     *
      * <p>
      * Renders the response with a json object, for example,
      * <pre>
@@ -482,8 +498,8 @@ public class ArticleConsole {
      * </pre>
      * </p>
      *
-     * @param context the specified http request context
-     * @param request the specified http servlet request
+     * @param context  the specified http request context
+     * @param request  the specified http servlet request
      * @param response the specified http servlet response
      * @throws Exception exception
      */
@@ -496,9 +512,7 @@ public class ArticleConsole {
         }
 
         final JSONRenderer renderer = new JSONRenderer();
-
         context.setRenderer(renderer);
-
         final JSONObject ret = new JSONObject();
 
         renderer.setJSONObject(ret);
@@ -521,7 +535,6 @@ public class ArticleConsole {
             LOGGER.log(Level.ERROR, e.getMessage(), e);
 
             final JSONObject jsonObject = new JSONObject();
-
             renderer.setJSONObject(jsonObject);
             jsonObject.put(Keys.STATUS_CODE, false);
             jsonObject.put(Keys.MSG, langPropsService.get("putTopFailLabel"));
@@ -530,7 +543,6 @@ public class ArticleConsole {
 
     /**
      * Updates an article by the specified request json object.
-     *
      * <p>
      * Renders the response with a json object, for example,
      * <pre>
@@ -541,48 +553,42 @@ public class ArticleConsole {
      * </pre>
      * </p>
      *
-     * @param context the specified http request context
-     * @param request the specified http servlet request, for example,      <pre>
-     * {
-     *     "article": {
-     *         "oId": "",
-     *         "articleTitle": "",
-     *         "articleAbstract": "",
-     *         "articleContent": "",
-     *         "articleTags": "tag1,tag2,tag3",
-     *         "articlePermalink": "", // optional
-     *         "articleIsPublished": boolean,
-     *         "articleSignId": "" // optional
-     *         "articleCommentable": boolean,
-     *         "articleViewPwd": "",
-     *         "postToCommunity": boolean
-     *     }
-     * }
-     * </pre>
-     *
-     * @param response the specified http servlet response
+     * @param context           the specified http request context
+     * @param request           the specified http servlet request
+     * @param response          the specified http servlet response
+     * @param requestJSONObject the specified request json object, for example,
+     *                          {
+     *                          "article": {
+     *                          "oId": "",
+     *                          "articleTitle": "",
+     *                          "articleAbstract": "",
+     *                          "articleContent": "",
+     *                          "articleTags": "tag1,tag2,tag3",
+     *                          "articlePermalink": "", // optional
+     *                          "articleIsPublished": boolean,
+     *                          "articleSignId": "" // optional
+     *                          "articleCommentable": boolean,
+     *                          "articleViewPwd": "",
+     *                          "postToCommunity": boolean
+     *                          }
+     *                          }
      * @throws Exception exception
      */
     @RequestProcessing(value = "/console/article/", method = HTTPRequestMethod.PUT)
-    public void updateArticle(final HTTPRequestContext context, final HttpServletRequest request, final HttpServletResponse response)
-            throws Exception {
+    public void updateArticle(final HTTPRequestContext context, final HttpServletRequest request, final HttpServletResponse response,
+                              final JSONObject requestJSONObject) throws Exception {
         if (!userQueryService.isLoggedIn(request, response)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
         final JSONRenderer renderer = new JSONRenderer();
-
         context.setRenderer(renderer);
-
         final JSONObject ret = new JSONObject();
 
         try {
-            final JSONObject requestJSONObject = Requests.parseRequestJSONObject(request, response);
-
             final JSONObject article = requestJSONObject.getJSONObject(Article.ARTICLE);
             final String articleId = article.getString(Keys.OBJECT_ID);
-
             renderer.setJSONObject(ret);
 
             if (!articleQueryService.canAccessArticle(articleId, request)) {
@@ -600,7 +606,6 @@ public class ArticleConsole {
             LOGGER.log(Level.ERROR, e.getMessage(), e);
 
             final JSONObject jsonObject = QueryResults.defaultResult();
-
             renderer.setJSONObject(jsonObject);
             jsonObject.put(Keys.MSG, e.getMessage());
         }
@@ -608,7 +613,6 @@ public class ArticleConsole {
 
     /**
      * Adds an article with the specified request.
-     *
      * <p>
      * Renders the response with a json object, for example,
      * <pre>
@@ -620,50 +624,43 @@ public class ArticleConsole {
      * </pre>
      * </p>
      *
-     * @param request the specified http servlet request, for example,      <pre>
-     * {
-     *     "article": {
-     *         "articleTitle": "",
-     *         "articleAbstract": "",
-     *         "articleContent": "",
-     *         "articleTags": "tag1,tag2,tag3",
-     *         "articlePermalink": "", // optional
-     *         "articleIsPublished": boolean,
-     *         "postToCommunity": boolean,
-     *         "articleSignId": "" // optional
-     *         "articleCommentable": boolean,
-     *         "articleViewPwd": ""
-     *     }
-     * }
-     * </pre>
-     *
-     * @param response the specified http servlet response
-     * @param context the specified http request context
+     * @param request           the specified http servlet request
+     * @param response          the specified http servlet response
+     * @param context           the specified http request context
+     * @param requestJSONObject the specified request json object, for example,
+     *                          {
+     *                          "article": {
+     *                          "articleTitle": "",
+     *                          "articleAbstract": "",
+     *                          "articleContent": "",
+     *                          "articleTags": "tag1,tag2,tag3",
+     *                          "articlePermalink": "", // optional
+     *                          "articleIsPublished": boolean,
+     *                          "postToCommunity": boolean,
+     *                          "articleSignId": "" // optional
+     *                          "articleCommentable": boolean,
+     *                          "articleViewPwd": ""
+     *                          }
+     *                          }
      * @throws Exception exception
      */
     @RequestProcessing(value = "/console/article/", method = HTTPRequestMethod.POST)
-    public void addArticle(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context)
-            throws Exception {
+    public void addArticle(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context,
+                           final JSONObject requestJSONObject) throws Exception {
         if (!userQueryService.isLoggedIn(request, response)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
         final JSONRenderer renderer = new JSONRenderer();
-
         context.setRenderer(renderer);
-
         final JSONObject ret = new JSONObject();
 
         try {
-            final JSONObject requestJSONObject = Requests.parseRequestJSONObject(request, response);
-
             final JSONObject currentUser = userQueryService.getCurrentUser(request);
-
             requestJSONObject.getJSONObject(Article.ARTICLE).put(Article.ARTICLE_AUTHOR_EMAIL, currentUser.getString(User.USER_EMAIL));
 
             final String articleId = articleMgmtService.addArticle(requestJSONObject);
-
             ret.put(Keys.OBJECT_ID, articleId);
             ret.put(Keys.MSG, langPropsService.get("addSuccLabel"));
             ret.put(Keys.STATUS_CODE, true);
@@ -673,7 +670,6 @@ public class ArticleConsole {
             LOGGER.log(Level.ERROR, e.getMessage());
 
             final JSONObject jsonObject = QueryResults.defaultResult();
-
             renderer.setJSONObject(jsonObject);
             jsonObject.put(Keys.MSG, e.getMessage());
         }

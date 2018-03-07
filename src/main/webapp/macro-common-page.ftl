@@ -17,7 +17,7 @@
     <div class="content">
         <div class="logo">
             <a href="http://b3log.org" target="_blank">
-                <img border="0" alt="Solo" title="Solo" src="${staticServePath}/images/logo.jpg"/>
+                <img width="128" border="0" alt="Solo" title="Solo" src="${staticServePath}/images/logo.png"/>
             </a>
         </div>
         <div class="main">
@@ -28,7 +28,7 @@
 </div>
 <div class="footerWrapper">
     <div class="footer">
-        Powered by <a href="http://b3log.org" target="_blank">B3log 开源</a> • Solo ${version}
+        Powered by <a href="http://b3log.org" target="_blank">B3log 开源</a> • <a href="https://hacpai.com/tag/Solo" target="_blank">Solo</a> ${version}
     </div>
 </div>
 </body>

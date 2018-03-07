@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class PageQueryService {
     /**
      * Logger.
      */
-    private static final Logger LOGGER = Logger.getLogger(PageQueryService.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(PageQueryService.class);
 
     /**
      * Page repository.
@@ -71,7 +71,8 @@ public class PageQueryService {
      *         "pageCommentCount": int,
      *         "pageCommentable": boolean,
      *         "pageType": "",
-     *         "pageOpenTarget": ""
+     *         "pageOpenTarget": "",
+     *         "pageIcon": ""
      *     }
      * }
      * </pre>, returns {@code null} if not found
@@ -82,7 +83,6 @@ public class PageQueryService {
 
         try {
             final JSONObject page = pageRepository.get(pageId);
-
             if (null == page) {
                 return null;
             }
