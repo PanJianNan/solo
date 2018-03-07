@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,11 +38,7 @@ public class OptionCache {
     /**
      * Option cache.
      */
-    private static final Cache CACHE = CacheFactory.getCache(Option.OPTIONS);
-
-    static {
-        CACHE.setMaxCount(512);
-    }
+    private Cache CACHE = CacheFactory.getCache(Option.OPTIONS);
 
     /**
      * Gets an option by the specified option id.

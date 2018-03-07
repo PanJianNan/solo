@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,71 +16,53 @@
 package org.b3log.solo.model.feed.atom;
 
 import org.apache.commons.lang.time.DateFormatUtils;
+import org.b3log.latke.logging.Level;
+import org.b3log.latke.logging.Logger;
+import org.b3log.solo.processor.FeedProcessor;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
 /**
- * Feed.
- *
+ * Atom Feed.
  * <p>
  * See <a href="http://tools.ietf.org/html/rfc4287">RFC 4278</a> for more details.
  * </p>
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.1.0.1, Nov 19, 2011
+ * @version 1.1.0.2, Oct 21, 2017
  * @see Entry
  * @see Category
  * @since 0.3.1
  */
 public final class Feed {
+    /**
+     * Time zone id.
+     */
+    public static final String TIME_ZONE_ID = "Asia/Shanghai";
 
     /**
-     * Id.
+     * Logger.
      */
-    private String id;
-
-    /**
-     * Title.
-     */
-    private String title;
-
-    /**
-     * Subtitle.
-     */
-    private String subtitle;
-
-    /**
-     * Update date.
-     */
-    private Date updated;
-
-    /**
-     * Author.
-     */
-    private String author;
-
-    /**
-     * Link.
-     */
-    private String link;
-
-    /**
-     * Entries.
-     */
-    private List<Entry> entries = new ArrayList<>();
+    private static final Logger LOGGER = Logger.getLogger(FeedProcessor.class);
 
     /**
      * Link variable.
      */
     private static final String LINK_VARIABLE = "${link}";
-
-    /**
-     * Time zone id.
-     */
-    public static final String TIME_ZONE_ID = "Asia/Shanghai";
 
     /**
      * Start document.
@@ -161,6 +143,67 @@ public final class Feed {
      * Link element.
      */
     private static final String LINK_ELEMENT = "<link href=\"" + LINK_VARIABLE + "\" rel=\"self\" " + "type=\"application/atom+xml\" />";
+
+    /**
+     * Id.
+     */
+    private String id;
+
+    /**
+     * Title.
+     */
+    private String title;
+
+    /**
+     * Subtitle.
+     */
+    private String subtitle;
+
+    /**
+     * Update date.
+     */
+    private Date updated;
+
+    /**
+     * Author.
+     */
+    private String author;
+
+    /**
+     * Link.
+     */
+    private String link;
+
+    /**
+     * Entries.
+     */
+    private List<Entry> entries = new ArrayList<>();
+
+    /**
+     * Returns pretty print of the specified xml string.
+     *
+     * @param xml the specified xml string
+     * @return the pretty print of the specified xml string
+     * @throws Exception exception
+     */
+    private static String format(final String xml) {
+        try {
+            final DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            final Document doc = db.parse(new InputSource(new StringReader(xml)));
+            final Transformer transformer = TransformerFactory.newInstance().newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+            final StreamResult result = new StreamResult(new StringWriter());
+            final DOMSource source = new DOMSource(doc);
+            transformer.transform(source, result);
+
+            return result.getWriter().toString();
+        } catch (final Exception e) {
+            LOGGER.log(Level.ERROR, "format pretty XML failed", e);
+
+            return xml;
+        }
+    }
 
     /**
      * Gets the id.
@@ -317,6 +360,6 @@ public final class Feed {
 
         stringBuilder.append(END_FEED_ELEMENT);
 
-        return stringBuilder.toString();
+        return format(stringBuilder.toString());
     }
 }

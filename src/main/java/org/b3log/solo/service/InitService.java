@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,7 @@ import org.b3log.solo.SoloServletListener;
 import org.b3log.solo.model.*;
 import org.b3log.solo.model.Option.DefaultPreference;
 import org.b3log.solo.repository.*;
-import org.b3log.solo.util.Comments;
-import org.b3log.solo.util.Skins;
-import org.b3log.solo.util.Thumbnails;
-import org.b3log.solo.util.TimeZones;
+import org.b3log.solo.util.*;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -61,7 +58,7 @@ import java.util.Set;
  * Solo initialization service.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.5.2.13, Jul 9, 2017
+ * @version 1.5.2.17, Feb 27, 2018
  * @since 0.4.0
  */
 @Service
@@ -81,12 +78,6 @@ public class InitService {
      * Initialized time zone id.
      */
     private static final String INIT_TIME_ZONE_ID = "Asia/Shanghai";
-
-    /**
-     * Statistic repository.
-     */
-    @Inject
-    private StatisticRepository statisticRepository;
 
     /**
      * Option repository.
@@ -141,6 +132,12 @@ public class InitService {
      */
     @Inject
     private LinkRepository linkRepository;
+
+    /**
+     * Statistic management service.
+     */
+    @Inject
+    private StatisticMgmtService statisticMgmtService;
 
     /**
      * Language service.
@@ -201,7 +198,7 @@ public class InitService {
             return;
         }
 
-        LOGGER.log(Level.INFO, "Solo is running with database [{0}], creates all tables", Latkes.getRuntimeDatabase());
+        LOGGER.log(Level.DEBUG, "Solo is running with database [{0}], creates all tables", Latkes.getRuntimeDatabase());
 
         if (Latkes.RuntimeDatabase.H2 == Latkes.getRuntimeDatabase()) {
             String dataDir = Latkes.getLocalProperty("jdbc.URL");
@@ -222,8 +219,7 @@ public class InitService {
             final Transaction transaction = userRepository.beginTransaction();
 
             try {
-                final JSONObject statistic = statisticRepository.get(Statistic.STATISTIC);
-
+                final JSONObject statistic = optionRepository.get(Option.ID_C_STATISTIC_BLOG_ARTICLE_COUNT);
                 if (null == statistic) {
                     initStatistic();
                     initPreference(requestJSONObject);
@@ -286,7 +282,8 @@ public class InitService {
         final JSONObject article = new JSONObject();
 
         article.put(Article.ARTICLE_TITLE, langPropsService.get("helloWorld.title"));
-        final String content = langPropsService.get("helloWorld.content");
+        final String content = "![](" + Images.randImage() + "?imageView2/1/w/960/h/520/interlace/1/q/100) \n\n" +
+                langPropsService.get("helloWorld.content");
 
         article.put(Article.ARTICLE_ABSTRACT, content);
         article.put(Article.ARTICLE_CONTENT, content);
@@ -359,13 +356,11 @@ public class InitService {
             // Step 2: Add tag-article relations
             addTagArticleRelation(tags, article);
             // Step 3: Inc blog article and comment count statictis
-            final JSONObject statistic = statisticRepository.get(Statistic.STATISTIC);
+            statisticMgmtService.incBlogCommentCount();
+            statisticMgmtService.incPublishedBlogCommentCount();
+            statisticMgmtService.incBlogArticleCount();
+            statisticMgmtService.incPublishedBlogArticleCount();
 
-            statistic.put(Statistic.STATISTIC_BLOG_ARTICLE_COUNT, 1);
-            statistic.put(Statistic.STATISTIC_PUBLISHED_ARTICLE_COUNT, 1);
-            statistic.put(Statistic.STATISTIC_PUBLISHED_BLOG_COMMENT_COUNT, 1);
-            statistic.put(Statistic.STATISTIC_BLOG_COMMENT_COUNT, 1);
-            statisticRepository.update(Statistic.STATISTIC, statistic);
             // Step 4: Add archive date-article relations
             archiveDate(article);
             // Step 5: Add article
@@ -526,15 +521,36 @@ public class InitService {
      */
     private void initStatistic() throws RepositoryException, JSONException {
         LOGGER.debug("Initializing statistic....");
-        final JSONObject statistic = new JSONObject();
 
-        statistic.put(Keys.OBJECT_ID, Statistic.STATISTIC);
-        statistic.put(Statistic.STATISTIC_BLOG_ARTICLE_COUNT, 0);
-        statistic.put(Statistic.STATISTIC_PUBLISHED_ARTICLE_COUNT, 0);
-        statistic.put(Statistic.STATISTIC_BLOG_VIEW_COUNT, 0);
-        statistic.put(Statistic.STATISTIC_BLOG_COMMENT_COUNT, 0);
-        statistic.put(Statistic.STATISTIC_PUBLISHED_BLOG_COMMENT_COUNT, 0);
-        statisticRepository.add(statistic);
+        final JSONObject statisticBlogArticleCountOpt = new JSONObject();
+        statisticBlogArticleCountOpt.put(Keys.OBJECT_ID, Option.ID_C_STATISTIC_BLOG_ARTICLE_COUNT);
+        statisticBlogArticleCountOpt.put(Option.OPTION_VALUE, "0");
+        statisticBlogArticleCountOpt.put(Option.OPTION_CATEGORY, Option.CATEGORY_C_STATISTIC);
+        optionRepository.add(statisticBlogArticleCountOpt);
+
+        final JSONObject statisticBlogCommentCountOpt = new JSONObject();
+        statisticBlogCommentCountOpt.put(Keys.OBJECT_ID, Option.ID_C_STATISTIC_BLOG_COMMENT_COUNT);
+        statisticBlogCommentCountOpt.put(Option.OPTION_VALUE, "0");
+        statisticBlogCommentCountOpt.put(Option.OPTION_CATEGORY, Option.CATEGORY_C_STATISTIC);
+        optionRepository.add(statisticBlogCommentCountOpt);
+
+        final JSONObject statisticBlogViewCountOpt = new JSONObject();
+        statisticBlogViewCountOpt.put(Keys.OBJECT_ID, Option.ID_C_STATISTIC_BLOG_VIEW_COUNT);
+        statisticBlogViewCountOpt.put(Option.OPTION_VALUE, "0");
+        statisticBlogViewCountOpt.put(Option.OPTION_CATEGORY, Option.CATEGORY_C_STATISTIC);
+        optionRepository.add(statisticBlogViewCountOpt);
+
+        final JSONObject statisticPublishedBlogArticleCountOpt = new JSONObject();
+        statisticPublishedBlogArticleCountOpt.put(Keys.OBJECT_ID, Option.ID_C_STATISTIC_PUBLISHED_ARTICLE_COUNT);
+        statisticPublishedBlogArticleCountOpt.put(Option.OPTION_VALUE, "0");
+        statisticPublishedBlogArticleCountOpt.put(Option.OPTION_CATEGORY, Option.CATEGORY_C_STATISTIC);
+        optionRepository.add(statisticPublishedBlogArticleCountOpt);
+
+        final JSONObject statisticPublishedBlogCommentCountOpt = new JSONObject();
+        statisticPublishedBlogCommentCountOpt.put(Keys.OBJECT_ID, Option.ID_C_STATISTIC_PUBLISHED_BLOG_COMMENT_COUNT);
+        statisticPublishedBlogCommentCountOpt.put(Option.OPTION_VALUE, "0");
+        statisticPublishedBlogCommentCountOpt.put(Option.OPTION_CATEGORY, Option.CATEGORY_C_STATISTIC);
+        optionRepository.add(statisticPublishedBlogCommentCountOpt);
 
         LOGGER.debug("Initialized statistic");
     }
@@ -835,15 +851,6 @@ public class InitService {
      */
     public void setUserRepository(final UserRepository userRepository) {
         this.userRepository = userRepository;
-    }
-
-    /**
-     * Sets the statistic repository with the specified statistic repository.
-     *
-     * @param statisticRepository the specified statistic repository
-     */
-    public void setStatisticRepository(final StatisticRepository statisticRepository) {
-        this.statisticRepository = statisticRepository;
     }
 
     /**

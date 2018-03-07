@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,10 @@
  */
 package org.b3log.solo.util.comparator;
 
-
 import org.b3log.solo.model.Tag;
 import org.json.JSONObject;
 
 import java.util.Comparator;
-
 
 /**
  * Tag comparator by reference count descent.
@@ -33,7 +31,8 @@ public final class TagRefCntComparator implements Comparator<JSONObject> {
     /**
      * Package default constructor.
      */
-    TagRefCntComparator() {}
+    TagRefCntComparator() {
+    }
 
     @Override
     public int compare(final JSONObject tag1, final JSONObject tag2) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import javax.servlet.http.HttpServletResponse;
  * Plugin console request processing.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.0.0.2, Aug 9, 2012
+ * @version 1.0.0.4, Mar 3, 2018
  * @since 0.4.0
  */
 @RequestProcessor
@@ -91,26 +91,29 @@ public class PageConsole {
      * </pre>
      * </p>
      *
-     * @param request  the specified http servlet request, for example,
-     *                 {
-     *                 "page": {
-     *                 "oId": "",
-     *                 "pageTitle": "",
-     *                 "pageContent": "",
-     *                 "pageOrder": int,
-     *                 "pageCommentCount": int,
-     *                 "pagePermalink": "",
-     *                 "pageCommentable": boolean,
-     *                 "pageType": "",
-     *                 "pageOpenTarget": ""
-     *                 }
-     *                 }, see {@link org.b3log.solo.model.Page} for more details
-     * @param response the specified http servlet response
-     * @param context  the specified http request context
+     * @param request           the specified http servlet request
+     * @param response          the specified http servlet response
+     * @param context           the specified http request context
+     * @param requestJSONObject the specified reuqest json object, for example,
+     *                          {
+     *                          "page": {
+     *                          "oId": "",
+     *                          "pageTitle": "",
+     *                          "pageContent": "",
+     *                          "pageOrder": int,
+     *                          "pageCommentCount": int,
+     *                          "pagePermalink": "",
+     *                          "pageCommentable": boolean,
+     *                          "pageType": "",
+     *                          "pageOpenTarget": "",
+     *                          "pageIcon": ""
+     *                          }
+     *                          }, see {@link org.b3log.solo.model.Page} for more details
      * @throws Exception exception
      */
     @RequestProcessing(value = "/console/page/", method = HTTPRequestMethod.PUT)
-    public void updatePage(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context)
+    public void updatePage(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context,
+                           final JSONObject requestJSONObject)
             throws Exception {
         if (!userQueryService.isAdminLoggedIn(request)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -124,8 +127,6 @@ public class PageConsole {
         final JSONObject ret = new JSONObject();
 
         try {
-            final JSONObject requestJSONObject = Requests.parseRequestJSONObject(request, response);
-
             pageMgmtService.updatePage(requestJSONObject);
 
             ret.put(Keys.STATUS_CODE, true);
@@ -202,23 +203,26 @@ public class PageConsole {
      * </pre>
      * </p>
      *
-     * @param context  the specified http request context
-     * @param request  the specified http servlet request, for example,
-     *                 {
-     *                 "page": {
-     *                 "pageTitle": "",
-     *                 "pageContent": "",
-     *                 "pagePermalink": "" // optional,
-     *                 "pageCommentable": boolean,
-     *                 "pageType": "",
-     *                 "pageOpenTarget": ""
-     *                 }
-     *                 }, see {@link org.b3log.solo.model.Page} for more details
-     * @param response the specified http servlet response
+     * @param context           the specified http request context
+     * @param request           the specified http servlet request
+     * @param response          the specified http servlet response
+     * @param requestJSONObject the specified request json object, for example,
+     *                          {
+     *                          "page": {
+     *                          "pageTitle": "",
+     *                          "pageContent": "",
+     *                          "pagePermalink": "" // optional,
+     *                          "pageCommentable": boolean,
+     *                          "pageType": "",
+     *                          "pageOpenTarget": "",
+     *                          "pageIcon": ""
+     *                          }
+     *                          }, see {@link org.b3log.solo.model.Page} for more details
      * @throws Exception exception
      */
     @RequestProcessing(value = "/console/page/", method = HTTPRequestMethod.POST)
-    public void addPage(final HTTPRequestContext context, final HttpServletRequest request, final HttpServletResponse response)
+    public void addPage(final HTTPRequestContext context, final HttpServletRequest request, final HttpServletResponse response,
+                        final JSONObject requestJSONObject)
             throws Exception {
         if (!userQueryService.isAdminLoggedIn(request)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -232,8 +236,6 @@ public class PageConsole {
         final JSONObject ret = new JSONObject();
 
         try {
-            final JSONObject requestJSONObject = Requests.parseRequestJSONObject(request, response);
-
             final String pageId = pageMgmtService.addPage(requestJSONObject);
 
             ret.put(Keys.OBJECT_ID, pageId);
@@ -263,17 +265,19 @@ public class PageConsole {
      * </pre>
      * </p>
      *
-     * @param request  the specified http servlet request, for example,
-     *                 {
-     *                 "oId": "",
-     *                 "direction": "" // "up"/"down"
-     *                 }
-     * @param response the specified http servlet response
-     * @param context  the specified http request context
+     * @param request           the specified http servlet request
+     * @param response          the specified http servlet response
+     * @param context           the specified http request context
+     * @param requestJSONObject the specified request json object, for example,
+     *                          {
+     *                          "oId": "",
+     *                          "direction": "" // "up"/"down"
+     *                          }
      * @throws Exception exception
      */
     @RequestProcessing(value = "/console/page/order/", method = HTTPRequestMethod.PUT)
-    public void changeOrder(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context)
+    public void changeOrder(final HttpServletRequest request, final HttpServletResponse response, final HTTPRequestContext context,
+                            final JSONObject requestJSONObject)
             throws Exception {
         if (!userQueryService.isAdminLoggedIn(request)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -287,7 +291,6 @@ public class PageConsole {
         final JSONObject ret = new JSONObject();
 
         try {
-            final JSONObject requestJSONObject = Requests.parseRequestJSONObject(request, response);
             final String linkId = requestJSONObject.getString(Keys.OBJECT_ID);
             final String direction = requestJSONObject.getString(Common.DIRECTION);
 
@@ -321,6 +324,7 @@ public class PageConsole {
      *         "pageOrder": int,
      *         "pagePermalink": "",
      *         "pageCommentCount": int,
+     *         "pageIcon": ""
      *     }
      * }
      * </pre>
@@ -348,7 +352,6 @@ public class PageConsole {
             final String pageId = requestURI.substring((Latkes.getContextPath() + "/console/page/").length());
 
             final JSONObject result = pageQueryService.getPage(pageId);
-
             if (null == result) {
                 renderer.setJSONObject(QueryResults.defaultResult());
 
@@ -362,7 +365,6 @@ public class PageConsole {
             LOGGER.log(Level.ERROR, e.getMessage(), e);
 
             final JSONObject jsonObject = QueryResults.defaultResult();
-
             renderer.setJSONObject(jsonObject);
             jsonObject.put(Keys.MSG, langPropsService.get("getFailLabel"));
         }
@@ -383,7 +385,8 @@ public class PageConsole {
      *         "pageTitle": "",
      *         "pageCommentCount": int,
      *         "pageOrder": int,
-     *         "pagePermalink": ""
+     *         "pagePermalink": "",
+     *         .{@link PageMgmtService...}
      *      }, ....]
      *     "sc": "GET_PAGES_SUCC"
      * }

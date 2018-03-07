@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,7 +205,6 @@ $.extend(Admin.prototype, {
      */
     init: function () {
         //window.onerror = Util.error;
-
         Util.killIE();
         $("#loadMsg").text(Label.loadingLabel);
 
@@ -264,7 +263,7 @@ $.extend(Admin.prototype, {
 });
 
 var admin = new Admin();/*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -363,7 +362,7 @@ admin.editors.articleEditor = {};
 admin.editors.abstractEditor = {};
 admin.editors.pageEditor = {};
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -488,7 +487,7 @@ admin.editors.tinyMCE = {
     }
 };
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -593,7 +592,7 @@ admin.editors.KindEditor = {
     }
 };
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -916,7 +915,7 @@ admin.editors.CodeMirror = {
         $('.editor-toolbar').remove();
     }
 };/*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1030,7 +1029,7 @@ $.extend(TablePaginate.prototype, {
     }
 });
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1049,7 +1048,7 @@ $.extend(TablePaginate.prototype, {
  *
  * @author <a href="http://vanessa.b3log.org">Liyuan Li</a>
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.4.5.7, May 21, 2017
+ * @version 1.5.0.0, Feb 25, 2018
  */
 admin.article = {
     currentEditorType: '',
@@ -1236,6 +1235,11 @@ admin.article = {
             var articleContent = admin.editors.articleEditor.getContent(),
                     articleAbstract = admin.editors.abstractEditor.getContent();
 
+            if ($('#articleThumbnail').prop('checked')) {
+                var bgImage = $('.thumbnail__img').css('background-image');
+                articleContent = '![](' + bgImage.substring(5, bgImage.length - 2) + ')\n\n' + articleContent;
+            }
+
             var requestJSONObject = {
                 "article": {
                     "articleTitle": $("#title").val(),
@@ -1309,7 +1313,10 @@ admin.article = {
 
             var articleContent = admin.editors.articleEditor.getContent(),
                     articleAbstract = admin.editors.abstractEditor.getContent();
-
+            if ($('#articleThumbnail').prop('checked')) {
+                var bgImage = $('.thumbnail__img').css('background-image');
+                articleContent = '![](' + bgImage.substring(5, bgImage.length - 2) + ') \n\n' + articleContent;
+            }
             var requestJSONObject = {
                 "article": {
                     "oId": this.status.id,
@@ -1456,6 +1463,10 @@ admin.article = {
 
         $(".editor-preview-active").html("").removeClass('editor-preview-active');
         $("#uploadContent").remove();
+
+        if ($('#articleThumbnail').prop('checked')) {
+          $('#articleThumbnail').click();
+        }
     },
     /**
      * @description 初始化发布文章页面
@@ -1495,7 +1506,7 @@ admin.article = {
                     height: 160,
                     buttonText: Label.selectLabel,
                     data: tags
-                }).width($("#tag").parent().width() - 68);
+                }).innerWidth($("#tag").parent().width() - 68);
 
                 $("#loadMsg").text("");
             }
@@ -1508,8 +1519,8 @@ admin.article = {
             } else {
                 admin.article.add(true);
             }
-        }
-        );
+        });
+
         $("#saveArticle").click(function () {
             if (admin.article.status.id) {
                 admin.article.update(admin.article.status.isArticle);
@@ -1538,6 +1549,24 @@ admin.article = {
         admin.article.autoSaveDraftTimer = setInterval(function () {
             admin.article._autoSaveToDraft();
         }, admin.article.AUTOSAVETIME);
+
+
+        // thumbnail
+        $('#articleThumbnailBtn').click(function () {
+          $.ajax({// Gets all tags
+            url: latkeConfig.servePath + "/console/thumbs?n=1",
+            type: "GET",
+            cache: false,
+            success: function (result, textStatus) {
+              if (!result.sc) {
+                $("#loadMsg").text(result.msg);
+                return;
+              }
+
+              $('#articleThumbnailBtn').prev().css('background-image', 'url(' + result.data[0] + ')');
+            }
+          });
+        }).click();
     },
     /**
      * @description 自动保存草稿件
@@ -1716,7 +1745,7 @@ function getUUID() {
 }
 ;
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1846,7 +1875,7 @@ admin.comment = {
     }
 };
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1995,7 +2024,7 @@ admin.register["article-list"] =  {
     "init": admin.articleList.init,
     "refresh": admin.articleList.getList
 }/*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2108,7 +2137,7 @@ admin.register["draft-list"] =  {
     "init": admin.draftList.init,
     "refresh": admin.draftList.getList
 };/*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2127,7 +2156,7 @@ admin.register["draft-list"] =  {
  *
  * @author <a href="http://vanessa.b3log.org">Liyuan Li</a>
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.2.2.5, Apr 9, 2017
+ * @version 1.2.3.6, Sep 21, 2017
  */
 
 /* page-list 相关操作 */
@@ -2262,7 +2291,11 @@ admin.pageList = {
                                     </div>';
                     }
 
-                    pageData[i].pageTitle = "<a class='no-underline' href='" + pages[i].pagePermalink + "' target='_blank'>" +
+                    var pageIcon = '';
+                    if (pages[i].pageIcon !== '') {
+                      pageIcon = "<img class='navigation-icon' src='" + pages[i].pageIcon + "'/> ";
+                    }
+                    pageData[i].pageTitle = pageIcon + "<a class='no-underline' href='" + pages[i].pagePermalink + "' target='_blank'>" +
                             pages[i].pageTitle + "</a>";
                     pageData[i].pagePermalink = "<a class='no-underline' href='" + pages[i].pagePermalink + "' target='_blank'>"
                             + pages[i].pagePermalink + "</a>";
@@ -2305,6 +2338,7 @@ admin.pageList = {
                 $("#pageTitle").val(result.page.pageTitle);
                 $("#pagePermalink").val(result.page.pagePermalink);
                 $("#pageTarget").val(result.page.pageOpenTarget);
+                $("#pageIcon").val(result.page.pageIcon);
                 if (result.page.pageType === "page") {
                     $($(".fn-type").get(1)).click();
                 } else {
@@ -2387,7 +2421,8 @@ admin.pageList = {
                     "pagePermalink": pagePermalink,
                     "pageCommentable": $("#pageCommentable").prop("checked"),
                     "pageType": admin.pageList.type,
-                    "pageOpenTarget": $("#pageTarget").val()
+                    "pageOpenTarget": $("#pageTarget").val(),
+                    "pageIcon": $("#pageIcon").val()
                 }
             };
 
@@ -2406,6 +2441,7 @@ admin.pageList = {
                     admin.pageList.id = "";
                     $("#pagePermalink").val("");
                     $("#pageTitle").val("");
+                    $("#pageIcon").val("");
                     $("#pageCommentable").prop("cheked", false);
                     $("#pageTarget").val("_self");
                     $($(".fn-type").get(0)).click();
@@ -2453,7 +2489,8 @@ admin.pageList = {
                     "pageCommentable": $("#pageCommentable").prop("checked"),
                     "pageType": admin.pageList.type,
                     "pageOpenTarget": $("#pageTarget").val(),
-                    "pageEditorType": admin.pageList.currentEditorType
+                    "pageEditorType": admin.pageList.currentEditorType,
+                    "pageIcon": $("#pageIcon").val()
                 }
             };
 
@@ -2473,6 +2510,7 @@ admin.pageList = {
 
                     admin.pageList.getList(admin.pageList.pageInfo.currentPage);
                     $("#pageTitle").val("");
+                    $("#pageIcon").val("");
                     $("#pagePermalink").val("");
                     $("#pageCommentable").prop("cheked", false);
                     $("#pageTarget").val("_self");
@@ -2555,7 +2593,7 @@ admin.register["page-list"] = {
     "refresh": admin.pageList.getList
 }
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2570,137 +2608,179 @@ admin.register["page-list"] = {
  * limitations under the License.
  */
 /**
- * others for admin
+ * others for admin.
  *
  * @author <a href="http://vanessa.b3log.org">Liyuan Li</a>
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.1.0.8, Jul 27, 2016
+ * @version 1.3.0.0, Nov 11, 2017
  */
 
 /* oterhs 相关操作 */
 admin.others = {
-    /*
-     * @description 初始化
-     */
-    init: function () {
-        $("#tabOthers").tabs();
+  /*
+   * @description 初始化
+   */
+  init: function () {
+    $("#tabOthers").tabs();
 
-        $.ajax({
-            url: latkeConfig.servePath + "/console/reply/notification/template",
-            type: "GET",
-            cache: false,
-            success: function (result, textStatus) {
-                $("#tipMsg").text(result.msg);
-                if (!result.sc) {
-                    $("#loadMsg").text("");
-                    return;
-                }
+    $.ajax({
+      url: latkeConfig.servePath + "/console/reply/notification/template",
+      type: "GET",
+      cache: false,
+      success: function (result, textStatus) {
+        $("#tipMsg").text(result.msg);
+        if (!result.sc) {
+          $("#loadMsg").text("");
+          return;
+        }
 
-                $("#replayEmailTemplateTitle").val(result.replyNotificationTemplate.subject);
-                $("#replayEmailTemplateBody").val(result.replyNotificationTemplate.body);
+        $("#replayEmailTemplateTitle").val(result.replyNotificationTemplate.subject);
+        $("#replayEmailTemplateBody").val(result.replyNotificationTemplate.body);
 
-                $("#loadMsg").text("");
-            }
-        });
-    },
-    /*
-     * @description 移除未使用的标签。
-     */
-    removeUnusedTags: function () {
-        $("#tipMsg").text("");
+        $("#loadMsg").text("");
+      }
+    });
+  },
+  /*
+   * @description 移除未使用的标签
+   */
+  removeUnusedTags: function () {
+    $("#tipMsg").text("");
 
-        $.ajax({
-            url: latkeConfig.servePath + "/console/tag/unused",
-            type: "DELETE",
-            cache: false,
-            success: function (result, textStatus) {
-                $("#tipMsg").text(result.msg);
-            }
-        });
-    },
-    /*
-     * @description 移除未使用的标签。
-     */
-    exportSQL: function () {
-        $("#tipMsg").text("");
+    $.ajax({
+      url: latkeConfig.servePath + "/console/tag/unused",
+      type: "DELETE",
+      cache: false,
+      success: function (result, textStatus) {
+        $("#tipMsg").text(result.msg);
+      }
+    });
+  },
+  /*
+   * @description 导出数据为 SQL 文件
+   */
+  exportSQL: function () {
+    $("#tipMsg").text("");
 
-        $.ajax({
-            url: latkeConfig.servePath + "/console/export/sql",
-            type: "GET",
-            cache: false,
-            success: function (result, textStatus) {
-                // AJAX 下载文件的话这里会发两次请求，用 sc 来判断是否是文件，如果没有 sc 说明文件可以下载（实际上就是 result）
-                if (!result.sc) {
-                    // 再发一次请求进行正式下载
-                    window.location = latkeConfig.servePath + "/console/export/sql";
-                } else {
-                    $("#tipMsg").text(result.msg);
-                }
-            }
-        });
-    },
-    /*
-     * 获取未使用的标签。
-     * XXX: Not used this function yet.
-     */
-    getUnusedTags: function () {
-        $.ajax({
-            url: latkeConfig.servePath + "/console/tag/unused",
-            type: "GET",
-            cache: false,
-            success: function (result, textStatus) {
-                $("#tipMsg").text(result.msg);
-                if (!result.sc) {
-                    $("#loadMsg").text("");
-                    return;
-                }
+    $.ajax({
+      url: latkeConfig.servePath + "/console/export/sql",
+      type: "GET",
+      cache: false,
+      success: function (result, textStatus) {
+        // AJAX 下载文件的话这里会发两次请求，用 sc 来判断是否是文件，如果没有 sc 说明文件可以下载（实际上就是 result）
+        if (!result.sc) {
+          // 再发一次请求进行正式下载
+          window.location = latkeConfig.servePath + "/console/export/sql";
+        } else {
+          $("#tipMsg").text(result.msg);
+        }
+      }
+    });
+  },
+  /*
+ * @description 导出数据为 JSON 文件
+ */
+  exportJSON: function () {
+    $("#tipMsg").text("");
 
-                var unusedTags = result.unusedTags;
-                if (0 === unusedTags.length) {
-                    return;
-                }
-            }
-        });
-    },
-    /*
-     * @description 跟新回复提醒邮件模版
-     */
-    update: function () {
-        $("#loadMsg").text(Label.loadingLabel);
-        $("#tipMsg").text("");
+    $.ajax({
+      url: latkeConfig.servePath + "/console/export/json",
+      type: "GET",
+      cache: false,
+      success: function (result, textStatus) {
+        // AJAX 下载文件的话这里会发两次请求，用 sc 来判断是否是文件，如果没有 sc 说明文件可以下载（实际上就是 result）
+        if (!result.sc) {
+          // 再发一次请求进行正式下载
+          window.location = latkeConfig.servePath + "/console/export/json";
+        } else {
+          $("#tipMsg").text(result.msg);
+        }
+      }
+    });
+  },
+  /*
+  * @description 导出数据为 Hexo Markdown 文件
+  */
+  exportHexo: function () {
+    $("#tipMsg").text("");
 
-        var requestJSONObject = {
-            "replyNotificationTemplate": {
-                "subject": $("#replayEmailTemplateTitle").val(),
-                "body": $("#replayEmailTemplateBody").val()
-            }
-        };
+    $.ajax({
+      url: latkeConfig.servePath + "/console/export/hexo",
+      type: "GET",
+      cache: false,
+      success: function (result, textStatus) {
+        // AJAX 下载文件的话这里会发两次请求，用 sc 来判断是否是文件，如果没有 sc 说明文件可以下载（实际上就是 result）
+        if (!result.sc) {
+          // 再发一次请求进行正式下载
+          window.location = latkeConfig.servePath + "/console/export/hexo";
+        } else {
+          $("#tipMsg").text(result.msg);
+        }
+      }
+    });
+  },
+  /*
+   * 获取未使用的标签。
+   * XXX: Not used this function yet.
+   */
+  getUnusedTags: function () {
+    $.ajax({
+      url: latkeConfig.servePath + "/console/tag/unused",
+      type: "GET",
+      cache: false,
+      success: function (result, textStatus) {
+        $("#tipMsg").text(result.msg);
+        if (!result.sc) {
+          $("#loadMsg").text("");
+          return;
+        }
 
-        $.ajax({
-            url: latkeConfig.servePath + "/console/reply/notification/template",
-            type: "PUT",
-            cache: false,
-            data: JSON.stringify(requestJSONObject),
-            success: function (result, textStatus) {
-                $("#tipMsg").text(result.msg);
-                $("#loadMsg").text("");
-            }
-        });
-    }
+        var unusedTags = result.unusedTags;
+        if (0 === unusedTags.length) {
+          return;
+        }
+      }
+    });
+  },
+  /*
+   * @description 跟新回复提醒邮件模版
+   */
+  update: function () {
+    $("#loadMsg").text(Label.loadingLabel);
+    $("#tipMsg").text("");
+
+    var requestJSONObject = {
+      "replyNotificationTemplate": {
+        "subject": $("#replayEmailTemplateTitle").val(),
+        "body": $("#replayEmailTemplateBody").val()
+      }
+    };
+
+    $.ajax({
+      url: latkeConfig.servePath + "/console/reply/notification/template",
+      type: "PUT",
+      cache: false,
+      data: JSON.stringify(requestJSONObject),
+      success: function (result, textStatus) {
+        $("#tipMsg").text(result.msg);
+        $("#loadMsg").text("");
+      }
+    });
+  }
 };
 
 /*
  * 注册到 admin 进行管理 
  */
 admin.register.others = {
-    "obj": admin.others,
-    "init": admin.others.init,
-    "refresh": function () {
-        admin.clearTip();
-    }
+  "obj": admin.others,
+  "init": admin.others.init,
+  "refresh": function () {
+    admin.clearTip();
+  }
 };
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3049,7 +3129,7 @@ admin.register["link-list"] =  {
     "init": admin.linkList.init,
     "refresh": admin.linkList.getList
 }/*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3350,7 +3430,7 @@ admin.register["preference"] = {
     }
 };
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3526,7 +3606,7 @@ admin.register["plugin-list"] = {
     }
 };
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3887,7 +3967,7 @@ admin.register["user-list"] = {
     "init": admin.userList.init,
     "refresh": admin.userList.getList
 }/*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3906,7 +3986,7 @@ admin.register["user-list"] = {
  *
  * @author <a href="http://vanessa.b3log.org">Liyuan Li</a>
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.1.1.1, Apr 10, 2017
+ * @version 1.1.2.0, Feb 24, 2018
  * @since 2.0.0
  */
 
@@ -3978,7 +4058,7 @@ admin.categoryList = {
                     height: 160,
                     buttonText: Label.selectLabel,
                     data: tags
-                }).width($("#categoryTags").parent().width() - 68);
+                }).width($("#categoryTags").parent().width() - 94);
 
                 $("#loadMsg").text("");
             }
@@ -4254,7 +4334,7 @@ admin.register["category-list"] = {
     "init": admin.categoryList.init,
     "refresh": admin.categoryList.getList
 }/*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4337,8 +4417,8 @@ admin.commentList = {
                     
                     commentsData[i] = {};
                     
-                    commentsData[i].content = Util.replaceEmString(comments[i].commentContent) + 
-                    "<span class='table-tag'> on &nbsp;&nbsp;</span><a href='" + latkeConfig.servePath + comments[i].commentSharpURL + 
+                    commentsData[i].content = '<div class="content-reset">' + Util.replaceEmString(comments[i].commentContent) +
+                    "</div><span class='table-tag'> on &nbsp;&nbsp;</span><a href='" + latkeConfig.servePath + comments[i].commentSharpURL +
                     "' target='_blank'>" + comments[i].commentTitle +
                     "</a>";
                 
@@ -4404,7 +4484,7 @@ admin.register["comment-list"] =  {
     "init": admin.commentList.init,
     "refresh": admin.commentList.getList
 }/*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4538,7 +4618,7 @@ admin.plugin = {
     }
 };
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4576,7 +4656,7 @@ admin.register.main =  {
     }
 };
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

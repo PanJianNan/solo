@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,8 @@ import org.testng.annotations.Test;
  * {@link UserQueryService} test case.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.0.0.1, May 16, 2012
+ * @author <a href="https://github.com/nanolikeyou">nanolikeyou</a>
+ * @version 1.0.0.2, Aug 14, 2017
  */
 @Test(suiteName = "service")
 public class UserQueryServiceTestCase extends AbstractTestCase {
@@ -43,7 +44,7 @@ public class UserQueryServiceTestCase extends AbstractTestCase {
 
         final JSONObject requestJSONObject = new JSONObject();
 
-        requestJSONObject.put(User.USER_NAME, "user1 name");
+        requestJSONObject.put(User.USER_NAME, "user1name");
         requestJSONObject.put(User.USER_EMAIL, "test1@gmail.com");
         requestJSONObject.put(User.USER_PASSWORD, "pass1");
 

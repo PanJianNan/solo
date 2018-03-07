@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package org.b3log.solo.service;
-
 
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.commons.lang.time.DateUtils;
@@ -49,12 +48,11 @@ import java.util.List;
 
 import static org.b3log.solo.model.Article.*;
 
-
 /**
  * Article management service.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.2.2.8, Jun 25, 2017
+ * @version 1.2.2.10, Oct 3, 2017
  * @since 0.3.5
  */
 @Service
@@ -363,11 +361,8 @@ public class ArticleMgmtService {
 
             // Update
             final boolean postToCommunity = article.optBoolean(Common.POST_TO_COMMUNITY, true);
-
             article.remove(Common.POST_TO_COMMUNITY); // Do not persist this property
-
             articleRepository.update(articleId, article);
-
             article.put(Common.POST_TO_COMMUNITY, postToCommunity); // Restores the property
 
             if (publishNewArticle) {
@@ -439,15 +434,11 @@ public class ArticleMgmtService {
      * @throws ServiceException service exception
      */
     public String addArticle(final JSONObject requestJSONObject) throws ServiceException {
-        // TODO: add article args check
-
         final Transaction transaction = articleRepository.beginTransaction();
 
         try {
             final JSONObject article = requestJSONObject.getJSONObject(Article.ARTICLE);
-
             final String ret = addArticleInternal(article);
-
             transaction.commit();
 
             return ret;
@@ -482,7 +473,6 @@ public class ArticleMgmtService {
             article.put(Article.ARTICLE_TAGS_REF, tagsString);
             final String[] tagTitles = tagsString.split(",");
             final JSONArray tags = tag(tagTitles, article);
-
             // Step 2; Set comment/view count to 0
             article.put(Article.ARTICLE_COMMENT_COUNT, 0);
             article.put(Article.ARTICLE_VIEW_COUNT, 0);
@@ -507,11 +497,9 @@ public class ArticleMgmtService {
             archiveDate(article);
             // Step 8: Set permalink
             final String permalink = getPermalinkForAddArticle(article);
-
             article.put(Article.ARTICLE_PERMALINK, permalink);
             // Step 9: Add article sign id
             final String signId = article.optString(Article.ARTICLE_SIGN_ID, "1");
-
             article.put(Article.ARTICLE_SIGN_ID, signId);
             // Step 10: Set had been published status
             article.put(Article.ARTICLE_HAD_BEEN_PUBLISHED, false);
@@ -665,7 +653,6 @@ public class ArticleMgmtService {
 
         try {
             article.put(Article.ARTICLE_VIEW_COUNT, article.getInt(Article.ARTICLE_VIEW_COUNT) + 1);
-
             articleRepository.update(articleId, article);
 
             transaction.commit();
@@ -903,7 +890,6 @@ public class ArticleMgmtService {
     /**
      * Removes tag-article relations by the specified article id and tag ids of the relations to be removed.
      * <p>
-     * <p>
      * Removes all relations if not specified the tag ids.
      * </p>
      *
@@ -1011,14 +997,13 @@ public class ArticleMgmtService {
     /**
      * Removes article comments by the specified article id.
      * <p>
-     * <p> Removes related comments, sets article/blog comment statistic count.
+     * Removes related comments, sets article/blog comment statistic count.
      * </p>
      *
      * @param articleId the specified article id
-     * @throws JSONException       json exception
-     * @throws RepositoryException repository exception
+     * @throws Exception exception
      */
-    private void removeArticleComments(final String articleId) throws JSONException, RepositoryException {
+    private void removeArticleComments(final String articleId) throws Exception {
         final int removedCnt = commentRepository.removeComments(articleId);
         int blogCommentCount = statisticQueryService.getBlogCommentCount();
 
@@ -1027,7 +1012,7 @@ public class ArticleMgmtService {
 
         final JSONObject article = articleRepository.get(articleId);
 
-        if (article.getBoolean(Article.ARTICLE_IS_PUBLISHED)) {
+        if (article.optBoolean(Article.ARTICLE_IS_PUBLISHED)) {
             int publishedBlogCommentCount = statisticQueryService.getPublishedBlogCommentCount();
 
             publishedBlogCommentCount -= removedCnt;

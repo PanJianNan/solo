@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
  *
  * @author <a href="http://vanessa.b3log.org">Liyuan Li</a>
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.4.5.7, May 21, 2017
+ * @version 1.5.0.0, Feb 25, 2018
  */
 admin.article = {
     currentEditorType: '',
@@ -205,6 +205,11 @@ admin.article = {
             var articleContent = admin.editors.articleEditor.getContent(),
                     articleAbstract = admin.editors.abstractEditor.getContent();
 
+            if ($('#articleThumbnail').prop('checked')) {
+                var bgImage = $('.thumbnail__img').css('background-image');
+                articleContent = '![](' + bgImage.substring(5, bgImage.length - 2) + ')\n\n' + articleContent;
+            }
+
             var requestJSONObject = {
                 "article": {
                     "articleTitle": $("#title").val(),
@@ -278,7 +283,10 @@ admin.article = {
 
             var articleContent = admin.editors.articleEditor.getContent(),
                     articleAbstract = admin.editors.abstractEditor.getContent();
-
+            if ($('#articleThumbnail').prop('checked')) {
+                var bgImage = $('.thumbnail__img').css('background-image');
+                articleContent = '![](' + bgImage.substring(5, bgImage.length - 2) + ') \n\n' + articleContent;
+            }
             var requestJSONObject = {
                 "article": {
                     "oId": this.status.id,
@@ -425,6 +433,10 @@ admin.article = {
 
         $(".editor-preview-active").html("").removeClass('editor-preview-active');
         $("#uploadContent").remove();
+
+        if ($('#articleThumbnail').prop('checked')) {
+          $('#articleThumbnail').click();
+        }
     },
     /**
      * @description 初始化发布文章页面
@@ -464,7 +476,7 @@ admin.article = {
                     height: 160,
                     buttonText: Label.selectLabel,
                     data: tags
-                }).width($("#tag").parent().width() - 68);
+                }).innerWidth($("#tag").parent().width() - 68);
 
                 $("#loadMsg").text("");
             }
@@ -477,8 +489,8 @@ admin.article = {
             } else {
                 admin.article.add(true);
             }
-        }
-        );
+        });
+
         $("#saveArticle").click(function () {
             if (admin.article.status.id) {
                 admin.article.update(admin.article.status.isArticle);
@@ -507,6 +519,24 @@ admin.article = {
         admin.article.autoSaveDraftTimer = setInterval(function () {
             admin.article._autoSaveToDraft();
         }, admin.article.AUTOSAVETIME);
+
+
+        // thumbnail
+        $('#articleThumbnailBtn').click(function () {
+          $.ajax({// Gets all tags
+            url: latkeConfig.servePath + "/console/thumbs?n=1",
+            type: "GET",
+            cache: false,
+            success: function (result, textStatus) {
+              if (!result.sc) {
+                $("#loadMsg").text(result.msg);
+                return;
+              }
+
+              $('#articleThumbnailBtn').prev().css('background-image', 'url(' + result.data[0] + ')');
+            }
+          });
+        }).click();
     },
     /**
      * @description 自动保存草稿件

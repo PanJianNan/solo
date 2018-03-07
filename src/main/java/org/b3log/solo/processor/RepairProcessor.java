@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import org.b3log.latke.servlet.renderer.TextHTMLRenderer;
 import org.b3log.latke.util.CollectionUtils;
 import org.b3log.solo.model.Article;
 import org.b3log.solo.model.Option;
-import org.b3log.solo.model.Statistic;
 import org.b3log.solo.model.Tag;
 import org.b3log.solo.repository.ArticleRepository;
 import org.b3log.solo.repository.TagArticleRepository;
@@ -64,7 +63,7 @@ import java.util.concurrent.ExecutionException;
  * See AuthFilter filter configurations in web.xml for authentication.</p>
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.2.0.12, Jul 20, 2017
+ * @version 1.2.0.13, Sep 6, 2017
  * @since 0.3.1
  */
 @RequestProcessor
@@ -180,50 +179,6 @@ public class RepairProcessor {
 
             LOGGER.log(Level.ERROR, e.getMessage(), e);
             renderer.setContent("Removes unused article properties failed, error msg[" + e.getMessage() + "]");
-        }
-    }
-
-    /**
-     * Restores the statistics.
-     * <ul>
-     * <li>Uses the value of {@link Statistic#STATISTIC_PUBLISHED_BLOG_COMMENT_COUNT} for
-     * {@link Statistic#STATISTIC_BLOG_COMMENT_COUNT}</li>
-     * <li>Uses the value of {@link Statistic#STATISTIC_PUBLISHED_ARTICLE_COUNT} for
-     * {@link Statistic#STATISTIC_BLOG_ARTICLE_COUNT}</li>
-     * </ul>
-     *
-     * @param context the specified context
-     */
-    @RequestProcessing(value = "/fix/restore-stat.do", method = HTTPRequestMethod.GET)
-    public void restoreStat(final HTTPRequestContext context) {
-        final TextHTMLRenderer renderer = new TextHTMLRenderer();
-
-        context.setRenderer(renderer);
-
-        try {
-            final JSONObject statistic = statisticQueryService.getStatistic();
-
-            if (statistic.has(Statistic.STATISTIC_BLOG_COMMENT_COUNT) && statistic.has(Statistic.STATISTIC_BLOG_ARTICLE_COUNT)) {
-                LOGGER.info("No need for repairing statistic");
-                renderer.setContent("No need for repairing statistic.");
-
-                return;
-            }
-
-            if (!statistic.has(Statistic.STATISTIC_BLOG_COMMENT_COUNT)) {
-                statistic.put(Statistic.STATISTIC_BLOG_COMMENT_COUNT, statistic.getInt(Statistic.STATISTIC_PUBLISHED_BLOG_COMMENT_COUNT));
-            }
-
-            if (!statistic.has(Statistic.STATISTIC_BLOG_ARTICLE_COUNT)) {
-                statistic.put(Statistic.STATISTIC_BLOG_ARTICLE_COUNT, statistic.getInt(Statistic.STATISTIC_PUBLISHED_ARTICLE_COUNT));
-            }
-
-            statisticMgmtService.updateStatistic(statistic);
-
-            renderer.setContent("Restores statistic succeeded.");
-        } catch (final Exception e) {
-            LOGGER.log(Level.ERROR, e.getMessage(), e);
-            renderer.setContent("Restores statistics failed, error msg[" + e.getMessage() + "]");
         }
     }
 
@@ -381,7 +336,6 @@ public class RepairProcessor {
             remove(beanManager.getReference(OptionRepositoryImpl.class));
             remove(beanManager.getReference(PageRepositoryImpl.class));
             remove(beanManager.getReference(PluginRepositoryImpl.class));
-            remove(beanManager.getReference(StatisticRepositoryImpl.class));
             remove(beanManager.getReference(TagArticleRepositoryImpl.class));
             remove(beanManager.getReference(TagRepositoryImpl.class));
             remove(beanManager.getReference(UserRepositoryImpl.class));

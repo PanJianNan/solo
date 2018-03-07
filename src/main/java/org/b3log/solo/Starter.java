@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Copyright (c) 2010-2018, b3log.org & hacpai.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,13 @@ import java.net.URI;
 
 /**
  * Solo with embedded Jetty, <a href="https://github.com/b3log/solo/issues/12037">standalone mode</a>.
- * <p>
  * <ul>
  * <li>Windows: java -cp WEB-INF/lib/*;WEB-INF/classes org.b3log.solo.Starter</li>
  * <li>Unix-like: java -cp WEB-INF/lib/*:WEB-INF/classes org.b3log.solo.Starter</li>
  * </ul>
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.1.0.9, Jul 9, 2017
+ * @version 1.1.0.10, Nov 9, 2017
  * @since 1.2.0
  */
 public final class Starter {
@@ -100,6 +99,7 @@ public final class Starter {
         options.addOption(runtimeModeOpt);
 
         options.addOption("h", "help", false, "print help for the command");
+        options.addOption("no", "not_open", false, "not auto open in the browser");
 
         final HelpFormatter helpFormatter = new HelpFormatter();
         final CommandLineParser commandLineParser = new DefaultParser();
@@ -180,10 +180,22 @@ public final class Starter {
         final String contextPath = Latkes.getContextPath();
 
         try {
-            Desktop.getDesktop().browse(new URI(serverScheme + "://" + serverHost + ":" + serverPort + contextPath));
+            if (!commandLine.hasOption("no")) {
+                Desktop.getDesktop().browse(new URI(serverScheme + "://" + serverHost + ":" + serverPort + contextPath));
+            }
         } catch (final Throwable e) {
             // Ignored
         }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                server.stop();
+            } catch (final Exception e) {
+                logger.log(Level.ERROR, "Server stop failed", e);
+
+                System.exit(-1);
+            }
+        }));
 
         server.join();
     }
