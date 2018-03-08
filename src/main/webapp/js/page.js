@@ -93,200 +93,29 @@ $.extend(Page.prototype, {
       return false;
     }
 
-        var commentName = $("#commentName" + state).val().replace(/(^\s*)|(\s*$)/g, ""),
-                commenterContent = $("#comment" + state).val().replace(/(^\s*)|(\s*$)/g, "");
-        /*if (2 > commentName.length || commentName.length > 20) {
-            $("#commentErrorTip" + state).html(this.tips.nameTooLongLabel);
-            $("#commentName" + state).focus();
-        } else if ($("#commentEmail" + state).val().replace(/\s/g, "") === "") {
-            $("#commentErrorTip" + state).html(this.tips.mailCannotEmptyLabel);
-            $("#commentEmail" + state).focus();
-        } else if (!/^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?$/i.test($("#commentEmail" + state).val())) {
-            $("#commentErrorTip" + state).html(this.tips.mailInvalidLabel);
-            $("#commentEmail" + state).focus();
-        }*/
-        if (2 > commenterContent.length || commenterContent.length > 500) {
-            $("#commentErrorTip" + state).html(this.tips.commentContentCannotEmptyLabel);
-            $("#comment" + state).focus();
-        } else if ($("#commentValidate" + state).val().replace(/\s/g, "") === "") {
-            $("#commentErrorTip" + state).html(this.tips.captchaCannotEmptyLabel);
-            $("#commentValidate" + state).focus();
-        } else {
-            return true;
-        }
-        $("#commentErrorTip" + state).show();
-        return false;
-    },
-    /*
-     * @description 把评论中的标识替换为图片
-     * @param {Dom} selector
-     */
-    replaceCommentsEm: function (selector) {
-        var $commentContents = $(selector);
-        for (var i = 0; i < $commentContents.length; i++) {
-            var str = $commentContents[i].innerHTML;
-            $commentContents[i].innerHTML = Util.replaceEmString(str);
-        }
-    },
-    /*
-     * @description 初始化 SyantaxHighlighter
-     * @param {Array} languages 需要加载的语言 
-     */
-    _initSyntaxHighlighter: function (languages) {
-        // load brush js
-        for (var i = 0; i < languages.length; i++) {
-            switch (languages[i]) {
-                case "groovy":
-                    languages[i] = 'groovy				' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushGroovy.js';
-                    break;
-                case "java":
-                    languages[i] = 'java				' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushJava.js';
-                    break;
-                case "php":
-                    languages[i] = 'php				' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushPhp.js';
-                    break;
-                case "scala":
-                    languages[i] = 'scala				' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushScala.js';
-                    break;
-                case "sql":
-                    languages[i] = 'sql				' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushSql.js';
-                    break;
-                case "applescript":
-                    languages[i] = 'applescript			' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushAppleScript.js';
-                    break;
-                case "as3":
-                case "actionscript3":
-                    languages[i] = 'actionscript3 as3                  ' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushAS3.js';
-                    break;
-                case "bash":
-                case "shell":
-                    languages[i] = 'bash shell                         ' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushBash.js';
-                    break;
-                case "coldfusion":
-                case "cf":
-                    languages[i] = 'coldfusion cf			' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushColdFusion.js';
-                    break;
-                case "c#":
-                case "c-sharp":
-                case "csharp":
-                    languages[i] = 'c# c-sharp csharp                  ' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushCSharp.js';
-                    break;
-                case "cpp":
-                case "c":
-                    languages[i] = 'cpp c				' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushCpp.js';
-                    break;
-                case "css":
-                    languages[i] = 'css				' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushCss.js';
-                    break;
-                case "delphi":
-                case "pascal":
-                    languages[i] = 'delphi pascal			' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushDelphi.js';
-                    break;
-                case "diff":
-                case "patch":
-                case "pas":
-                    languages[i] = 'diff patch pas			' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushDiff.js';
-                    break;
-                case "erl":
-                case "erlang":
-                    languages[i] = 'erl erlang                         ' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushErlang.js';
-                    break;
-                case "js":
-                case "jscript":
-                case "javascript":
-                    languages[i] = 'js jscript javascript              ' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushJScript.js';
-                    break;
-                case "jfx":
-                case "javafx":
-                    languages[i] = 'jfx javafx                 	' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushJavaFX.js';
-                    break;
-                case "perl":
-                case "pl":
-                    languages[i] = 'perl pl                    	' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushPerl.js';
-                    break;
-                case "plain":
-                case "text":
-                    languages[i] = 'text plain                 	' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushPlain.js';
-                    break;
-                case "ps":
-                case "powershell":
-                    languages[i] = 'ps powershell                      ' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushPowerShell.js';
-                    break;
-                case "py":
-                case "python":
-                    languages[i] = 'py python                          ' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushPython.js';
-                    break;
-                case "rails":
-                case "ror":
-                case "ruby":
-                case "rb":
-                    languages[i] = 'ruby rails ror rb          	' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushRuby.js';
-                    break;
-                case "sass":
-                case "scss":
-                    languages[i] = 'sass scss                  	' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushSass.js';
-                    break;
-                case "vb":
-                case "vbnet":
-                    languages[i] = 'vb vbnet                   	' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushVb.js';
-                    break;
-                case "xml":
-                case "xhtml":
-                case "xslt":
-                case "html":
-                    languages[i] = 'xml xhtml xslt html                ' +
-                            latkeConfig.staticServePath + '/js/lib/SyntaxHighlighter/scripts/shBrushXml.js';
-                    break;
-                default:
-                    break;
-            }
-        }
-    var commentName = $("#commentName" + state).val().replace(/(^\s*)|(\s*$)/g, ""),
-      commenterContent = $("#comment" + state).val().replace(/(^\s*)|(\s*$)/g, "");
-    if (2 > commentName.length || commentName.length > 20) {
-      $("#commentErrorTip" + state).html(this.tips.nameTooLongLabel);
-      $("#commentName" + state).focus();
-    } else if ($("#commentEmail" + state).val().replace(/\s/g, "") === "") {
-      $("#commentErrorTip" + state).html(this.tips.mailCannotEmptyLabel);
-      $("#commentEmail" + state).focus();
-    } else if (!/^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?$/i.test($("#commentEmail" + state).val())) {
-      $("#commentErrorTip" + state).html(this.tips.mailInvalidLabel);
-      $("#commentEmail" + state).focus();
-    } else if (2 > commenterContent.length || commenterContent.length > 500) {
-      $("#commentErrorTip" + state).html(this.tips.commentContentCannotEmptyLabel);
-      $("#comment" + state).focus();
-    } else if ($("#commentValidate" + state).val().replace(/\s/g, "") === "") {
-      $("#commentErrorTip" + state).html(this.tips.captchaCannotEmptyLabel);
-      $("#commentValidate" + state).focus();
-    } else {
-      return true;
-    }
-    $("#commentErrorTip" + state).show();
-    return false;
+      var commentName = $("#commentName" + state).val().replace(/(^\s*)|(\s*$)/g, ""),
+          commenterContent = $("#comment" + state).val().replace(/(^\s*)|(\s*$)/g, "");
+      /*if (2 > commentName.length || commentName.length > 20) {
+       $("#commentErrorTip" + state).html(this.tips.nameTooLongLabel);
+       $("#commentName" + state).focus();
+       } else if ($("#commentEmail" + state).val().replace(/\s/g, "") === "") {
+       $("#commentErrorTip" + state).html(this.tips.mailCannotEmptyLabel);
+       $("#commentEmail" + state).focus();
+       } else if (!/^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?$/i.test($("#commentEmail" + state).val())) {
+       $("#commentErrorTip" + state).html(this.tips.mailInvalidLabel);
+       $("#commentEmail" + state).focus();
+       }*/
+      if (2 > commenterContent.length || commenterContent.length > 500) {
+          $("#commentErrorTip" + state).html(this.tips.commentContentCannotEmptyLabel);
+          $("#comment" + state).focus();
+      } else if ($("#commentValidate" + state).val().replace(/\s/g, "") === "") {
+          $("#commentErrorTip" + state).html(this.tips.captchaCannotEmptyLabel);
+          $("#commentValidate" + state).focus();
+      } else {
+          return true;
+      }
+      $("#commentErrorTip" + state).show();
+      return false;
   },
   /*
    * @description 把评论中的标识替换为图片
@@ -694,32 +523,6 @@ $.extend(Page.prototype, {
             listHtml += articleLiHtml
           }
 
-                    var titleHTML = headTitle ? headTitle : "<h4>" + tips.externalRelevantArticles1Label + "</h4>";
-                    var randomArticleListHtml = titleHTML
-                            + "<ul class='marginLeft12'>"
-                            + listHtml + "</ul>";
-                    $("#externalRelevantArticles").append(randomArticleListHtml);
-                }
-            });
-        } catch (e) {
-            // 忽略相关文章加载异常：load script error
-        }
-    },
-    /*
-     * @description 提交评论
-     * @param {String} commentId 回复评论时的评论 id
-     * @param {String} state 区分回复文章还是回复评论的标识
-     */
-    submitComment: function (commentId, state) {
-        if (!state) {
-            state = '';
-        }
-        var that = this,
-                tips = this.tips,
-                type = "article";
-        /*if (tips.externalRelevantArticlesDisplayCount === undefined) {
-            type = "page";
-        }*/
           var titleHTML = headTitle ? headTitle : "<h4>" + tips.externalRelevantArticles1Label + "</h4>";
           var randomArticleListHtml = titleHTML
             + "<ul class='marginLeft12'>"
@@ -743,9 +546,9 @@ $.extend(Page.prototype, {
     var that = this,
       tips = this.tips,
       type = "article";
-    if (tips.externalRelevantArticlesDisplayCount === undefined) {
+    /*if (tips.externalRelevantArticlesDisplayCount === undefined) {
       type = "page";
-    }
+    }*/
 
     if (this.validateComment(state)) {
       $("#submitCommentButton" + state).attr("disabled", "disabled");
