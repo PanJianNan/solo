@@ -28,6 +28,9 @@
         </div>
         <div class="site-wrapper">
             <#include "header.ftl">
+
+            <#include "tags_nav.ftl">
+
             <main id="content">
                 <#include "article-list.ftl">
             </main>

@@ -27,6 +27,7 @@ import org.b3log.latke.logging.Level;
 import org.b3log.latke.logging.Logger;
 import org.b3log.latke.model.Pagination;
 import org.b3log.latke.model.User;
+import org.b3log.latke.repository.Query;
 import org.b3log.latke.service.LangPropsService;
 import org.b3log.latke.service.ServiceException;
 import org.b3log.latke.servlet.HTTPRequestContext;
@@ -44,10 +45,12 @@ import org.b3log.solo.event.EventTypes;
 import org.b3log.solo.model.*;
 import org.b3log.solo.processor.renderer.ConsoleRenderer;
 import org.b3log.solo.processor.util.Filler;
+import org.b3log.solo.repository.TagRepository;
 import org.b3log.solo.service.*;
 import org.b3log.solo.util.Skins;
 import org.b3log.solo.util.Thumbnails;
 import org.b3log.solo.util.comparator.Comparators;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -141,6 +144,11 @@ public class ArticleProcessor {
      */
     @Inject
     private EventManager eventManager;
+    /**
+     * Tag repository.
+     */
+    @Inject
+    private TagRepository tagRepository;
 
     /**
      * Gets archive date from the specified URI.
@@ -1069,6 +1077,11 @@ public class ArticleProcessor {
             }
 
             final Map<String, Object> dataModel = renderer.getDataModel();
+
+            final JSONObject tagsResult = tagRepository.get(new Query());
+            final JSONArray tagArray = tagsResult.getJSONArray(Keys.RESULTS);
+            final List<JSONObject> tags = CollectionUtils.jsonArrayToList(tagArray);
+            dataModel.put("tags", tags);
 
             prepareShowArticle(preference, dataModel, article);
 

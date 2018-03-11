@@ -22,6 +22,8 @@ import org.b3log.latke.ioc.inject.Inject;
 import org.b3log.latke.logging.Level;
 import org.b3log.latke.logging.Logger;
 import org.b3log.latke.model.Pagination;
+import org.b3log.latke.repository.Query;
+import org.b3log.latke.repository.RepositoryException;
 import org.b3log.latke.service.LangPropsService;
 import org.b3log.latke.service.ServiceException;
 import org.b3log.latke.servlet.HTTPRequestContext;
@@ -31,6 +33,7 @@ import org.b3log.latke.servlet.annotation.RequestProcessing;
 import org.b3log.latke.servlet.annotation.RequestProcessor;
 import org.b3log.latke.servlet.renderer.freemarker.AbstractFreeMarkerRenderer;
 import org.b3log.latke.servlet.renderer.freemarker.FreeMarkerRenderer;
+import org.b3log.latke.util.CollectionUtils;
 import org.b3log.latke.util.Locales;
 import org.b3log.latke.util.Requests;
 import org.b3log.latke.util.freemarker.Templates;
@@ -40,9 +43,12 @@ import org.b3log.solo.model.Option;
 import org.b3log.solo.model.Skin;
 import org.b3log.solo.processor.renderer.ConsoleRenderer;
 import org.b3log.solo.processor.util.Filler;
+import org.b3log.solo.repository.TagRepository;
 import org.b3log.solo.service.PreferenceQueryService;
 import org.b3log.solo.service.StatisticMgmtService;
 import org.b3log.solo.util.Skins;
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.servlet.http.Cookie;
@@ -51,6 +57,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -93,6 +100,11 @@ public class IndexProcessor {
      */
     @Inject
     private StatisticMgmtService statisticMgmtService;
+    /**
+     * Tag repository.
+     */
+    @Inject
+    private TagRepository tagRepository;
 
     /**
      * Gets the request page number from the specified request URI.
@@ -122,6 +134,11 @@ public class IndexProcessor {
         final String requestURI = request.getRequestURI();
 
         try {
+            final JSONObject result = tagRepository.get(new Query());
+            final JSONArray tagArray = result.getJSONArray(Keys.RESULTS);
+            final List<JSONObject> tags = CollectionUtils.jsonArrayToList(tagArray);
+            dataModel.put("tags", tags);
+
             final int currentPageNum = getCurrentPageNum(requestURI);
             final JSONObject preference = preferenceQueryService.getPreference();
 
@@ -182,6 +199,10 @@ public class IndexProcessor {
             } catch (final IOException ex) {
                 LOGGER.error(ex.getMessage());
             }
+        } catch (RepositoryException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
     }
 
