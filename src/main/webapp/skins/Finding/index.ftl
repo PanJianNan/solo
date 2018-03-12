@@ -9,6 +9,7 @@
         <#if metaDescription??>
         <meta name="description" content="${metaDescription}"/>
         </#if>
+        <meta name="baidu-site-verification" content="AcuwEmUx6V" />
         </@head>
 
         <#--baidu tongji-->

@@ -101,6 +101,11 @@
     <include path="/CHANGE_LOGS.html"/>
     <include path="/LICENSE.txt"/>
 
+    <!--百度站长-->
     <include path="/baidu_verify_AcuwEmUx6V.html" />
+    <!--Google站长-->
+    <include path="/googlefb555085407a9f1e.html" />
+    <!--360站长-->
+    <include path="/a8f1155dd08c401bdebc7bcfa0f64111.txt" />
 
 </static-files>
