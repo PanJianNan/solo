@@ -41,6 +41,7 @@ import org.b3log.solo.SoloServletListener;
 import org.b3log.solo.model.Common;
 import org.b3log.solo.model.Option;
 import org.b3log.solo.model.Skin;
+import org.b3log.solo.model.Tag;
 import org.b3log.solo.processor.renderer.ConsoleRenderer;
 import org.b3log.solo.processor.util.Filler;
 import org.b3log.solo.repository.TagRepository;
@@ -57,6 +58,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -137,7 +139,14 @@ public class IndexProcessor {
             final JSONObject result = tagRepository.get(new Query());
             final JSONArray tagArray = result.getJSONArray(Keys.RESULTS);
             final List<JSONObject> tags = CollectionUtils.jsonArrayToList(tagArray);
-            dataModel.put("tags", tags);
+            List<JSONObject> useFulTags = new ArrayList<>();
+            for (JSONObject tag : tags) {
+                int tagArticleCount = tag.getInt(Tag.TAG_PUBLISHED_REFERENCE_COUNT);
+                if (tagArticleCount > 0) {
+                    useFulTags.add(tag);
+                }
+            }
+            dataModel.put("tags", useFulTags);
 
             final int currentPageNum = getCurrentPageNum(requestURI);
             final JSONObject preference = preferenceQueryService.getPreference();

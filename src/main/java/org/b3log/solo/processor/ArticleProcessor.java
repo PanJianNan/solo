@@ -1081,7 +1081,14 @@ public class ArticleProcessor {
             final JSONObject tagsResult = tagRepository.get(new Query());
             final JSONArray tagArray = tagsResult.getJSONArray(Keys.RESULTS);
             final List<JSONObject> tags = CollectionUtils.jsonArrayToList(tagArray);
-            dataModel.put("tags", tags);
+            List<JSONObject> useFulTags = new ArrayList<>();
+            for (JSONObject tag : tags) {
+                int tagArticleCount = tag.getInt(Tag.TAG_PUBLISHED_REFERENCE_COUNT);
+                if (tagArticleCount > 0) {
+                    useFulTags.add(tag);
+                }
+            }
+            dataModel.put("tags", useFulTags);
 
             prepareShowArticle(preference, dataModel, article);
 
