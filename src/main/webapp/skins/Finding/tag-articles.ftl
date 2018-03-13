@@ -14,13 +14,13 @@
         <div class="site-wrapper">
             <#include "header.ftl">
             <main id="content">
-                <h2 class="fn-wrap">
+                <h5 class="fn-wrap">
                     ${tag1Label}
                     <a rel="alternate" href="${servePath}/tag-articles-feed.do?oId=${tag.oId}">
                         ${tag.tagTitle}
                         (${tag.tagPublishedRefCount})
                     </a>
-                </h2>
+                </h5>
                 <#include "article-list.ftl">
             </main>
             <#include "footer.ftl">

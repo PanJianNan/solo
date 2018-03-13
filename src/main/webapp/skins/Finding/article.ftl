@@ -47,7 +47,7 @@
         </div>
         <div class="site-wrapper">
             <#include "header.ftl">
-            <#include "tags_nav.ftl">
+            <#--<#include "tags_nav.ftl">-->
             <main>
                 <article class="post fn-wrap">
                     <header>
